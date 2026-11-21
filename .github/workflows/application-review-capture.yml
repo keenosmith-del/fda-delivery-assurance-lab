@@ -1,0 +1,97 @@
+name: FDA application walkthrough capture
+on: [workflow_dispatch, push]
+permissions:
+  contents: read
+jobs:
+  capture:
+    if: github.ref == 'refs/heads/codex/application-review-capture'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 19
+    env:
+      DATABASE_URL: postgresql://fda:fda_capture@127.0.0.1:5432/fda_capture
+      LAB_MODE: test
+      LAB_ENABLE_FAULTS: 'true'
+      HOST: 127.0.0.1
+      PORT: '3300'
+      APP_COMMIT: 0a7f294d62bdfcbf4e2f818ca160b4a4da2a9632
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: fda
+          POSTGRES_PASSWORD: fda_capture
+          POSTGRES_DB: fda_capture
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U fda -d fda_capture"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify application source against release
+        run: |
+          git diff --exit-code "$APP_COMMIT" HEAD -- . ':(exclude).github/workflows/application-review-capture.yml' ':(exclude)scripts/review-capture.mjs'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: sudo apt-get install -y ffmpeg xdotool xvfb
+      - run: npm run build
+      - run: npm run db:migrate && npm run db:seed
+      - name: Record continuous application walkthrough
+        run: |
+          set -e
+          node backend/dist/backend/src/server.js > "$RUNNER_TEMP/fda-api.log" 2>&1 &
+          api=$!
+          node backend/dist/backend/src/workers/run.js > "$RUNNER_TEMP/fda-worker.log" 2>&1 &
+          worker=$!
+          npm exec -w frontend -- vite preview --host 127.0.0.1 --port 5179 --strictPort > "$RUNNER_TEMP/fda-ui.log" 2>&1 &
+          frontend=$!
+          trap 'kill "$api" "$worker" "$frontend" 2>/dev/null || true' EXIT
+          for trial in {1..50}; do
+            if curl -fsS http://127.0.0.1:5179/api/ready > /dev/null 2>&1 &&
+              curl -fsS http://127.0.0.1:5179/api/ops/status 2>/dev/null | jq -e '.worker.state == "running"' > /dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:5179/api/ready | jq -e '.status == "ready"'
+          curl -fsS http://127.0.0.1:5179/api/ops/status | jq -e '.worker.state == "running"'
+          xvfb-run -a -s '-screen 0 1920x1080x24' node scripts/review-capture.mjs
+      - name: Verify media and package
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json, struct, subprocess
+          root = Path('FDA_Application_Review')
+          video = root / 'application-walkthrough.mp4'
+          result = json.loads(subprocess.check_output(['ffprobe', '-v', 'error', '-show_streams', '-show_format', '-of', 'json', str(video)]))
+          stream = result['streams'][0]
+          duration = float(result['format']['duration'])
+          assert (stream['codec_name'], stream['width'], stream['height']) == ('h264', 1920, 1080), stream
+          assert 420 <= duration <= 600, duration
+          print(f'Verified H.264, 1920 x 1080, {duration:.1f} seconds')
+          for name in ['01-overview','02-ats-reliability','03-ats-comparison','04-workflow-evidence','05-agent-health','06-adoption-diagnostics','07-outcome-verification']:
+              data = (root / 'screenshots' / (name + '.png')).read_bytes()
+              assert struct.unpack('>II', data[16:24]) == (1920, 1080), name
+          assert (root / 'review-notes.md').is_file()
+          assert (root / 'pipeline-digest-outcome-evidence.json').is_file()
+          PY
+          ffmpeg -v error -xerror -i FDA_Application_Review/application-walkthrough.mp4 -f null -
+          zip -q -r FDA_Application_Review.zip FDA_Application_Review
+          unzip -tq FDA_Application_Review.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FDA_Application_Review
+          path: |
+            FDA_Application_Review/
+            FDA_Application_Review.zip
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 14
