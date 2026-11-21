@@ -12,6 +12,6 @@
 | Files modified | `backend/tests/measurement.test.ts`, `tests/e2e/measurement.spec.ts`, `tests/support/browser-server.ts`, `backend/tsconfig.json`, and the verification matrix. |
 | Tests executed | Type checks, backend suite, production builds and local browser run. The matrix records hosted runs. |
 | Actual results | Local type checks, both builds and 21 embedded tests passed. Four native-only tests were skipped locally. The local session reached the Playwright servers, then macOS denied Chromium's Mach port check-in. |
-| Problems and resolutions | Fixed a Node startup error that TypeScript's transforming build had accepted. Backend type checking now rejects TypeScript constructs that require transformation. Native and full browser verification run on Ubuntu CI. |
+| Problems and resolutions | Fixed a Node startup error that TypeScript's transforming build had accepted. Backend type checking now rejects TypeScript constructs that require transformation. The full regression suite passed on Ubuntu with PostgreSQL 17 and Chromium in [branch CI](https://github.com/keenosmith-del/fda-delivery-assurance-lab/actions/runs/44923886250) and [PR CI](https://github.com/keenosmith-del/fda-delivery-assurance-lab/actions/runs/44923911575), with 25 backend and seven browser tests. |
 | Known limitations | Public deployment and final presentation capture require separate review. |
 | Next steps | Review the loopback synthetic app, confirm operational security boundaries and obtain visual approval. |
