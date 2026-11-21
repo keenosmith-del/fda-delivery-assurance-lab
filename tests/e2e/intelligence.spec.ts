@@ -28,7 +28,8 @@ test('inspects a reporting but permission-limited endpoint', async ({ page }) =>
   await expect(page.getByRole('heading', { name: 'Workstation 07' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Missing observation intervals' })).toBeVisible();
   await page.getByText(/Activity history/).click();
-  await expect(page.getByText('Permissions limited', { exact: true })).toBeVisible();
+  const history = page.locator('details').filter({ hasText: /Activity history/ });
+  await expect(history.getByRole('listitem').filter({ hasText: 'Permissions limited' })).toBeVisible();
 });
 
 test('compares unsafe duplicate records with the transaction-safe outcome', async ({ page }) => {

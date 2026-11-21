@@ -11,7 +11,7 @@ export default defineConfig({
       gracefulShutdown: { signal: 'SIGTERM', timeout: 5000 },
     },
     {
-      command: 'npm run dev:frontend -- --host 127.0.0.1 --port 5179 --strictPort',
+      command: 'npm run dev -w frontend -- --host 127.0.0.1 --port 5179 --strictPort',
       url: 'http://127.0.0.1:5179',
       env: { PORT: '3300' },
     },
