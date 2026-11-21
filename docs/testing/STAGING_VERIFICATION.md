@@ -4,6 +4,10 @@
 
 On 21 November 2026, Railway CLI authenticated and listed accessible projects. Creation of a dedicated staging project returned `Free plan resource provision limit exceeded. Please upgrade to provision more resources!` No staging project was created and no existing project was repurposed. Capacity in an authorised workspace is required for the API, worker and managed PostgreSQL services. Hosted smoke, staging browser acceptance, restart checks on Railway and a staging URL are pending.
 
+## Verified release checks
+
+[GitHub Actions run 44926893880](https://github.com/keenosmith-del/fda-delivery-assurance-lab/actions/runs/44926893880) passed on 21 November 2026 for `3a9d837de8b352d1f37e86bf647d89491640a5db`. It verified 33 backend tests with PostgreSQL 17, seven baseline Chromium cases, two private-origin cases, the container build and a successful backup and restore with matching version and fixture counts.
+
 ## Executable checks
 
 - CI uses disposable PostgreSQL 17 for API integration, native concurrent and process recovery cases, then runs seven baseline Chromium cases and the separate private-origin browser suite.

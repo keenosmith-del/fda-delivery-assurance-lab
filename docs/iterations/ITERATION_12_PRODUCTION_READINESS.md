@@ -9,6 +9,7 @@
 | Frontend | Compiled assets are served under the same hosted access policy. |
 | Deployment | Non-root application image, separate service commands, staged migration, explicit seeding and repeatable smoke checks. |
 | Regression coverage | Added hosted configuration and access tests, native restart verification, compiled frontend browser cases and a disposable PostgreSQL backup and restore. |
+| Hosted execution | [Run 44926893880](https://github.com/keenosmith-del/fda-delivery-assurance-lab/actions/runs/44926893880) passed all 33 PostgreSQL 17, seven baseline Chromium and two private-origin Chromium tests plus the image and disposable restore checks. |
 | Local execution | 28 tests passed with embedded PostgreSQL. Five native-only cases are exercised in CI. |
 | Provider state | Authenticated Railway workspace rejected dedicated project creation because the free-plan resource provision limit was exceeded. No existing projects were modified. |
 | Remaining | Provision isolated staging capacity, execute hosted checks, and verify provider recovery. See [staging verification](../testing/STAGING_VERIFICATION.md). |

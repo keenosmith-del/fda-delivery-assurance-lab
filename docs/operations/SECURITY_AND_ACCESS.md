@@ -1,6 +1,6 @@
 # Security and access
 
-This environment contains synthetic records. The hosted interface requires HTTP Basic authentication at the application over the platform's TLS endpoint. The browser requests credentials through its built-in prompt. Static assets, API records and downloads use the same protected origin. Neither Vite nor the compiled application embeds credentials. Programme clients make the same authenticated requests.
+This environment contains synthetic records. The hosted interface requires HTTP Basic authentication at the application over the platform's TLS endpoint. The browser requests credentials through its built-in prompt. Static assets, API records and downloads use the same protected origin. Neither Vite nor the compiled application embeds credentials. Programmatic clients make the same authenticated requests.
 
 | Surface | Access |
 | --- | --- |
@@ -13,6 +13,6 @@ This environment contains synthetic records. The hosted interface requires HTTP 
 
 Use distinct high-entropy passwords and deliver them by an approved secret-sharing mechanism. Shared role credentials are intended for a small synthetic demonstration. Rotation invalidates the relevant role, and the browser may cache credentials until its private session closes. There is no user-level session revocation. Local development retains its optional `LAB_WRITE_TOKEN` and cannot bind outside loopback. A hosted API rejects this token configuration.
 
-The API applies request-body size and time limits, validates existing API contracts, disables cross-origin access, and emits a restrictive content security policy, HSTS, framing and MIME protections. Hosted reads and exports use no-store. Default rolling service quotas are fixed one-minute windows per instance: 30 invalid authentication requests across the process, and 240 reads and 40 writes per authenticated role. Quotas reset on restart. Use a provider edge limit or a shared limit before horizontal scaling or broad distribution.
+The API applies request-body size and time limits, validates existing API contracts, disables cross-origin access, and emits a restrictive content security policy, HSTS, framing and MIME protections. Hosted reads and exports use no-store. Default service quotas use fixed one-minute windows per instance: 30 invalid authentication requests across the process, and 240 reads and 40 writes per authenticated role. Quotas reset on restart. Use a provider edge limit or a shared limit before horizontal scaling or broad distribution.
 
 Request logs contain generated correlation IDs, HTTP methods, route templates, status and latency. Application and worker logs may include synthetic operation IDs. Headers, credentials, payloads and raw database errors are excluded from application logs. Restrict access to provider logs and deployment credentials. See [data retention](DATA_RETENTION.md).

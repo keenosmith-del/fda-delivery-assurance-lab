@@ -38,11 +38,17 @@ async function verifyOperation(id) {
   throw new Error('Worker did not confirm the smoke operation within 24 seconds.');
 }
 
+async function verifyWorker() {
+  const metrics = await (await request('/api/ops/status', [200], 'operator')).json();
+  if (metrics.worker.state !== 'running') throw new Error('Worker heartbeat is not current.');
+}
+
 if (process.argv[2] === 'after-restart') {
   const previous = JSON.parse(await readFile(LAB_SMOKE_STATE, 'utf8'));
   if (previous.origin !== origin.origin || !/^[a-f0-9-]{36}$/i.test(previous.operationId)) throw new Error('Invalid smoke state.');
   const operation = await verifyOperation(previous.operationId);
   if (operation.recordId !== previous.recordId) throw new Error('Persisted smoke record ID changed.');
+  await verifyWorker();
   console.log('The confirmed operation and original record ID survived restart.');
 } else if (process.argv.length === 2) {
   await request('/api/health', [200]);
@@ -66,8 +72,7 @@ if (process.argv[2] === 'after-restart') {
   await request('/api/lab/submission-comparison', [404], 'operator', { method: 'POST' });
   await request('/api/submissions', [202, 200], 'operator', submission);
   const operation = await verifyOperation(id);
-  const metrics = await (await request('/api/ops/status', [200], 'operator')).json();
-  if (metrics.worker.state !== 'running') throw new Error('Worker heartbeat is not current.');
+  await verifyWorker();
   await writeFile(LAB_SMOKE_STATE, JSON.stringify({ origin: origin.origin, operationId: id, recordId: operation.recordId }) + '\n',
     { mode: 0o600, flag: 'wx' });
   console.log('Private UI, access boundaries, module reads, rejected faults, PostgreSQL write and worker confirmation verified.');

@@ -33,7 +33,9 @@ it.runIf(Boolean(process.env.TEST_DATABASE_URL))('restarts real API and worker p
   }
   const request = async (route: string, options?: RequestInit) => fetch(origin + route,
     { ...options, signal: AbortSignal.timeout(2000) });
-  const ready = () => expect.poll(async () => (await request('/api/ready').catch(() => null))?.status).toBe(200);
+  const ready = () => expect.poll(async () => (await request('/api/ready').catch(() => null))?.status, { timeout: 7000 }).toBe(200);
+  const workerReady = () => expect.poll(async () => (await (await request('/api/ops/status')).json()).worker.state,
+    { timeout: 7000 }).toBe('running');
   const post = (route: string, payload: object, headers = {}) => request(route, { method: 'POST',
     body: JSON.stringify(payload), headers: { 'content-type': 'application/json', ...headers } });
 
@@ -43,6 +45,7 @@ it.runIf(Boolean(process.env.TEST_DATABASE_URL))('restarts real API and worker p
     const stopApi = service('backend/src/server.ts');
     const stopWorker = service('backend/src/workers/run.ts');
     await ready();
+    await workerReady();
     const id = randomUUID();
     expect((await post('/api/submissions', { candidateCode: 'CAND-100511', requisition: 'engineering' },
       { 'idempotency-key': id })).ok).toBe(true);
@@ -65,7 +68,7 @@ it.runIf(Boolean(process.env.TEST_DATABASE_URL))('restarts real API and worker p
     service('backend/src/server.ts');
     service('backend/src/workers/run.ts');
     await ready();
-    await expect.poll(async () => (await (await request('/api/ops/status')).json()).worker.state).toBe('running');
+    await workerReady();
     await expect.poll(async () => (await (await request('/api/operations/' + id)).json()).state).toBe('confirmed');
     expect((await (await request('/api/operations/' + id)).json()).recordId).toBe(initialRecord);
     expect((await (await request('/api/workflow/tasks/offer-review')).json()).reviews[0].reason).toBe('Persist this validation fixture.');
