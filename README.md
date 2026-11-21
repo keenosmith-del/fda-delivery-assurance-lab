@@ -13,16 +13,20 @@ The goal is **not to recreate or replace Attain**. It is to develop and demonstr
 3. **Adoption diagnostics** — Investigate low-adoption automations, classify likely causes, document corrective actions, and track follow-up measurements.
 4. **Outcome verification** — Distinguish observed activity, modeled savings, and verified improvements; calculate adoption-adjusted results while accounting for failures and rework.
 
-## Planned implementation
+## Current implementation
 
-- **Frontend:** React and TypeScript
-- **Backend:** Node.js and TypeScript
-- **Persistence:** PostgreSQL
-- **Background execution:** Recoverable jobs and durable processing
-- **Quality:** Automated API/integration tests, browser tests, controlled fault injection, CI, and observability
-- **Delivery:** Hosted interactive demonstration, engineering report, architecture diagrams, operational runbook, and narrated walkthrough
+The first ATS reliability slice includes a React scenario runner, Fastify API, PostgreSQL migration and separate confirmation worker. The runner demonstrates seven submission flows and shows the authoritative operation record, retries and audit events. After a timeout or tab reload, an operator can recover the same logical submission with its original operation ID.
 
-The implementation and deployment details will be documented as they are completed. This README describes **project scope**, not finished functionality.
+Use Node.js 24 and Docker Compose. From the project root:
+
+```sh
+npm ci
+cp -n .env.example .env
+docker compose -f infrastructure/docker/compose.yaml up -d --wait
+npm run db:migrate
+```
+
+In separate terminals, run `npm run dev`, `npm run dev:worker` and `npm run dev:frontend`. Vite prints the browser URL.
 
 ## Demonstration scenarios
 
@@ -37,17 +41,19 @@ The original FDA walkthrough illustrates task-discovery, endpoint-coverage, adop
 
 All application records, candidate data, activity events, failures, and benchmark workloads in this repository will be **synthetic or locally generated** unless explicitly documented otherwise. No real candidate information, installer binaries, access credentials, private telemetry, or proprietary walkthrough recordings belong in this public repository.
 
-## Project documentation (planned)
+## Documentation
 
-- `docs/assessment/` — Product analysis, evidence register, findings, and prioritisation
-- `docs/architecture/` — System design, decision records, models, and API contracts
-- `docs/testing/` — Acceptance criteria, failure scenarios, and reproducible results
-- `docs/operations/RUNBOOK.md` — Setup, deployment, monitoring, troubleshooting, and recovery
-- `docs/handoff/` — Executive brief, presentation, and demonstration narrative
+- [System overview and directory guide](docs/architecture/SYSTEM_OVERVIEW.md)
+- [API contracts](docs/architecture/API_CONTRACTS.md)
+- [Research source register](docs/research/SOURCE_REGISTER.md)
+- [Iteration records](docs/iterations/)
+- [Local setup and operational recovery](docs/operations/RUNBOOK.md)
+- [Status and verification matrix](docs/testing/VERIFICATION.md)
+- [Changelog](CHANGELOG.md)
 
 ## Status
 
-**Initialisation / engineering discovery.** Source code, installation steps, public demo URL, and verified test results will be added as the implementation progresses.
+The ATS slice builds and the embedded database integration tests pass. Native PostgreSQL concurrency, browser verification and hosted deployment are pending. Workflow Evidence, Adoption Diagnostics, Outcome Verification and Agent Health remain on the implementation roadmap.
 
 ---
 

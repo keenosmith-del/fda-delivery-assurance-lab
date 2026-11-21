@@ -1,0 +1,30 @@
+{
+  "name": "fda-delivery-assurance-lab",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "workspaces": [
+    "backend",
+    "frontend",
+    "shared"
+  ],
+  "scripts": {
+    "dev": "node --env-file-if-exists=.env --watch backend/src/server.ts",
+    "dev:frontend": "npm run dev -w frontend",
+    "dev:worker": "node --env-file-if-exists=.env --watch backend/src/workers/run.ts",
+    "build": "npm run build -w backend && npm run build -w frontend",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "db:migrate": "node --env-file-if-exists=.env backend/src/db/migrate.ts",
+    "test": "vitest run backend/tests",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.58.2",
+    "@types/node": "24.10.1",
+    "typescript": "5.9.3",
+    "vite": "6.4.6",
+    "vitest": "3.2.7"
+  }
+}

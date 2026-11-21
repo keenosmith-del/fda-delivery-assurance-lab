@@ -1,0 +1,18 @@
+services:
+  database:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: fda
+      POSTGRES_PASSWORD: fda_local
+      POSTGRES_DB: fda_lab
+    ports:
+      - "127.0.0.1:5435:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fda -d fda_lab"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+    volumes:
+      - fda_database:/var/lib/postgresql/data
+volumes:
+  fda_database:

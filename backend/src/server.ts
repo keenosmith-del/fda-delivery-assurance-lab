@@ -1,0 +1,23 @@
+import { createApp } from './api/app.ts';
+import { readConfig } from './config/env.ts';
+import { database } from './db/pool.ts';
+
+const config = readConfig();
+const pool = database(config.DATABASE_URL);
+const app = createApp({
+  pool,
+  writeToken: config.LAB_WRITE_TOKEN,
+  enableFaults: config.LAB_ENABLE_FAULTS === 'true',
+  logger: true,
+});
+
+pool.on('error', () => app.log.error('Idle database connection failed'));
+app.addHook('onClose', async () => { await pool.end(); });
+for (const signal of ['SIGINT', 'SIGTERM'] as const) process.once(signal, () => { void app.close(); });
+try {
+  await app.listen({ host: config.HOST, port: config.PORT });
+} catch (error) {
+  app.log.error({ errorType: error instanceof Error ? error.name : 'UnknownError' }, 'Could not start API');
+  await app.close();
+  process.exitCode = 1;
+}
