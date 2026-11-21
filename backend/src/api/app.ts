@@ -1,6 +1,9 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
 import Fastify, { LogController } from 'fastify';
 import type { Database } from '../db/pool.ts';
+import { comparison } from '../../../shared/contracts/intelligence.ts';
+import { compareSubmissions } from '../modules/submissions/comparison.ts';
+import { registerIntelligence } from './intelligence.ts';
 import { fault, operationId, submission } from '../../../shared/contracts/submissions.ts';
 import { BeforeCommitError, getOperation, submit } from '../modules/submissions/service.ts';
 
@@ -15,6 +18,9 @@ export function createApp({ pool, writeToken, enableFaults, logger = false }: Op
   const app = Fastify({ logger, bodyLimit: 4096, logController: new LogController({ disableRequestLogging: true }) });
   const digest = (value: string) => createHash('sha256').update(value).digest();
   const expectedToken = writeToken ? digest(writeToken) : null;
+
+  const canWrite = (token: string | undefined) => expectedToken === null ||
+    (typeof token === 'string' && token.startsWith('Bearer ') && timingSafeEqual(expectedToken, digest(token.slice(7))));
 
   app.addHook('onSend', async (_request, reply, payload) => {
     reply.header('cache-control', 'no-store');
@@ -50,9 +56,7 @@ export function createApp({ pool, writeToken, enableFaults, logger = false }: Op
   });
 
   app.post('/api/submissions', async (request, reply) => {
-    const token = request.headers.authorization;
-    if (expectedToken && (typeof token !== 'string' || !token.startsWith('Bearer ') ||
-      !timingSafeEqual(expectedToken, digest(token.slice(7))))) {
+    if (!canWrite(request.headers.authorization)) {
       return reply.code(401).send({ error: 'WRITE_TOKEN_REQUIRED' });
     }
 
@@ -87,5 +91,12 @@ export function createApp({ pool, writeToken, enableFaults, logger = false }: Op
     }
   });
 
+  app.post('/api/lab/submission-comparison', async (request, reply) => {
+    if (!enableFaults) return reply.code(404).send({ error: 'FAULT_NOT_AVAILABLE' });
+    if (!canWrite(request.headers.authorization)) return reply.code(401).send({ error: 'WRITE_TOKEN_REQUIRED' });
+    return comparison.parse(await compareSubmissions(pool));
+  });
+
+  registerIntelligence(app, pool, canWrite);
   return app;
 }

@@ -15,7 +15,7 @@ The goal is **not to recreate or replace Attain**. It is to develop and demonstr
 
 ## Current implementation
 
-The first ATS reliability slice includes a React scenario runner, Fastify API, PostgreSQL migration and separate confirmation worker. The runner demonstrates seven submission flows and shows the authoritative operation record, retries and audit events. After a timeout or tab reload, an operator can recover the same logical submission with its original operation ID.
+The workspace includes the ATS reliability runner and lost-acknowledgment comparison, Workflow Evidence with persisted review history, and Agent Health with independently tracked reporting, permissions and evidence freshness. PostgreSQL stores the synthetic fixtures, submission operations, audit events, and review history. A separate worker confirms ATS operations.
 
 Use Node.js 24 and Docker Compose. From the project root:
 
@@ -24,16 +24,16 @@ npm ci
 cp -n .env.example .env
 docker compose -f infrastructure/docker/compose.yaml up -d --wait
 npm run db:migrate
+npm run db:seed
 ```
 
 In separate terminals, run `npm run dev`, `npm run dev:worker` and `npm run dev:frontend`. Vite prints the browser URL.
 
 ## Demonstration scenarios
 
-- **Ambiguous submission:** Simulate a successful database write followed by a lost browser acknowledgment; retry the same operation without creating a duplicate business record.
-- **Incomplete observation:** Explore how a workflow report should represent missing endpoint telemetry and uncertainty in task classification.
-- **Low adoption:** Diagnose an automation that is live but underused, record an intervention, and compare follow-up adoption.
-- **Measured impact:** Reconcile baseline activity, attempted automations, successful executions, exceptions, and estimated net benefit.
+- **Ambiguous submission:** Compare an isolated unsafe retry with PostgreSQL-backed idempotent replay and business-key deduplication.
+- **Workflow review:** Filter synthetic task candidates, inspect supporting evidence and save independent classification and automation suitability decisions.
+- **Incomplete observation:** Inspect why a reporting workstation can still have stale observations and limited permissions.
 
 ## Evidence and boundaries
 
@@ -53,7 +53,7 @@ All application records, candidate data, activity events, failures, and benchmar
 
 ## Status
 
-The ATS slice builds and the embedded database integration tests pass. Native PostgreSQL concurrency, browser verification and hosted deployment are pending. Workflow Evidence, Adoption Diagnostics, Outcome Verification and Agent Health remain on the implementation roadmap.
+Type checking, builds and embedded PostgreSQL tests pass. Native multi-connection and process-recovery verification, browser verification and visual review are pending for these changes. Adoption Diagnostics and Outcome Verification are subsequent workstreams.
 
 ---
 

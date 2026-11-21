@@ -1,16 +1,14 @@
 # Implementation status and verification
 
-| Capability | Implementation | Verification |
-| --- | --- | --- |
-| API and worker | Fastify routes, migration, durable confirmation | Typecheck and production build passed. Eight Fastify-injection integration tests passed against embedded PostgreSQL via PGlite. |
-| Idempotency and atomic write | Same-key replay, changed-payload conflict, distinct-key duplicate link | Passed embedded tests and verified record counts with SQL. Native multi-connection concurrency test is defined and pending. |
-| Request fault recovery | Synthetic rollback before commit and 504 after commit | Passed integration tests. Browser specs await an environment that permits local server sockets. |
-| Worker recovery | Lease expiry, stale worker fence, bounded backoff and terminal status | Passed the persistence tests with controlled lease expiry and four failed attempts. |
-| React runner | Seven selectable scenarios, authoritative database trace, stable recovery across reload | Typecheck and production build passed. Playwright startup returned `listen EPERM` for `127.0.0.1:3300`, so browser assertions did not run. |
-| Local database | PostgreSQL 17 Compose service | Compose configuration parsed. Docker daemon was unavailable. |
-| CI | Native PostgreSQL 17, integration suite, build and Playwright | Workflow added. No hosted run observed. |
-| Subsequent modules | Discovery, adoption, outcomes and agent health | Pending implementation. |
-| Deployment and visual approval | Hosted demo and final capture | Pending. |
+| Capability | Baseline and local verification |
+| --- | --- |
+| Type checking and builds | Both frontend and backend type checks and builds pass. |
+| Integration and calculation tests | 14 pass using embedded PostgreSQL. These include submission idempotency, rollback, lost acknowledgment, bounded retries, evidence scoring, seeded coverage, protected review writes and comparison record counts. |
+| Native PostgreSQL | Baseline run `44889196879` passed its native test step. The expanded suite has four native-only tests skipped locally, covering separate-connection duplicates and conflicts, worker termination and restart, and database interruption. |
+| Browser suites | Five tests discovered. Local API listener failed with `EPERM`, so no browser assertions executed locally. |
+| Hosted CI | [Baseline run](https://github.com/keenosmith-del/fda-delivery-assurance-lab/actions/runs/44889196879) failed at Chromium installation on Ubuntu 26.04. The locked Playwright 1.58.2 installer includes Ubuntu 24.04, which is pinned in the working tree. A new hosted run awaits a pushed commit. |
+| Local database and preview | Compose configuration parses. Docker's daemon is unavailable here and this session cannot bind API or Vite sockets. |
+| Visual approval | Pending a working preview. Presentation captures await approval. |
 
 ## Reproduce
 
@@ -19,6 +17,8 @@ npm run typecheck
 npm test
 npm run build
 docker compose -f infrastructure/docker/compose.yaml config --quiet
+npx playwright install chromium
+npm run test:e2e
 ```
 
-To include native concurrency, run the integration test with `TEST_DATABASE_URL` targeting a dedicated PostgreSQL instance. The fixture creates and removes a schema for each test server. Install Chromium with `npx playwright install chromium` and run `npm run test:e2e` on a host that allows local listener sockets. By default, the test suite uses embedded PostgreSQL and reports native concurrency as skipped.
+Set `TEST_DATABASE_URL` to a dedicated PostgreSQL instance to run the native-only tests. Each fixture uses a temporary schema. The process test terminates only its own child worker. The network test briefly closes connections on a local proxy dedicated to its client pool.

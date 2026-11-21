@@ -1,4 +1,4 @@
-# ATS lab runbook
+# Delivery Assurance Lab runbook
 
 ## Local start
 
@@ -9,6 +9,7 @@ npm ci
 cp -n .env.example .env
 docker compose -f infrastructure/docker/compose.yaml up -d --wait
 npm run db:migrate
+npm run db:seed
 ```
 
 Start each process from a separate terminal at the repository root:
@@ -27,13 +28,23 @@ Open the Vite URL printed in the frontend terminal. The default is `http://local
 | `HOST` | API bind address, default `127.0.0.1` |
 | `PORT` | API port, also used by the Vite dev proxy, default 3000 |
 | `LAB_WRITE_TOKEN` | Optional loopback write secret. Required for non-loopback API binding. Enter it under Operator access. |
-| `LAB_ENABLE_FAULTS` | `true` enables the two submission scenarios, default `false` |
+| `LAB_ENABLE_FAULTS` | `true` enables controlled request faults and the comparison, default `false` |
 | `MIGRATIONS_DIR` | Optional migration location, relative to migration command working directory |
 | `TEST_DATABASE_URL` | Optional dedicated PostgreSQL database. Test fixtures create and drop isolated schemas. |
 
 ## Demonstration
 
 Choose **Lost acknowledgment** and run the scenario. The trace shows a synthetic 504, the committed operation found by lookup, and the same UUID replayed. Inspect the record ID and the replay and confirmation audit events. Choose **Timeout before commit**, generate a fresh candidate code, and repeat. The lookup is empty until the retry writes the record.
+
+### Compare the paths
+
+With `LAB_ENABLE_FAULTS=true`, select **ATS Reliability** and press **Run comparison**. If required, enter the write token under **Operator access** first. The isolated reference runs a second insert after discarding the acknowledgment and produces two fixture records. The transactional path looks up the committed operation, reuses its UUID and then submits a fresh UUID for the same business key. It returns the SQL record count and audit events `accepted`, `replayed` and `duplicate_linked`. Each run creates one synthetic business record and two traced operations.
+
+### Inspect and review evidence
+
+Open **Discover** and select **Candidate offer review**. Expand both scoring breakdowns and the supporting observations. Inspect the recommendation to retain human review. Record a synthetic reason with separate classification and suitability decisions, then reload the task to verify the saved review.
+
+Open **Agent Health** and select **Workstation 07**. Its heartbeat qualifies as reporting while its permission history records limited access and its evidence is stale. Select **Workstation 09** to inspect an enrolled endpoint with no observations. Gap intervals mark slots without successful observations during the labelled demo window.
 
 ## Troubleshooting and recovery
 

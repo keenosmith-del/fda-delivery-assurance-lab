@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 test('recovers a lost acknowledgment and displays the persisted record', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/#ats-reliability');
   await page.getByLabel('Scenario').selectOption('lost-ack');
   await page.getByRole('button', { name: 'Run scenario' }).click();
   await expect(page.getByText('Commit found in PostgreSQL')).toBeVisible();
@@ -17,7 +17,7 @@ test('recovers a lost acknowledgment and displays the persisted record', async (
 });
 
 test('shows the rollback and reuses the same operation after a pre-commit interruption', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/#ats-reliability');
   await page.getByLabel('Scenario').selectOption('before-commit');
   await page.getByRole('button', { name: 'Run scenario' }).click();
   await expect(page.getByText('Operation absent after rollback')).toBeVisible();

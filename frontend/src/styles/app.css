@@ -55,3 +55,27 @@ dd { margin: 0; overflow-wrap: anywhere; }
 .trace li > span:first-letter { text-transform: uppercase; }
 footer { border-top: 1px solid var(--line); padding: 18px 0; margin-top: 36px; color: var(--muted); font-size: .82rem; }
 @media (max-width: 720px) { .panels { grid-template-columns: 1fr; } }
+
+.navigation { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.navigation a { color: var(--muted); font-size: .86rem; text-decoration: none; padding: 7px 12px; border-radius: 8px; }
+.navigation a[aria-current] { color: #223529; background: #e8eee8; font-weight: 650; }
+.overview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 245px), 1fr)); gap: 16px; }
+.overview-grid a { color: var(--green); text-underline-offset: 4px; }
+.overview-grid p, .comparison > p, .coverage-summary p { color: var(--muted); }
+.entity-list, .factor-list, .history { list-style: none; padding: 0; }
+.entity-list li { margin: 6px 0; }
+.entity-list button { width: 100%; text-align: left; background: #fff; color: inherit; border: 1px solid var(--line); }
+.entity-list button[aria-pressed="true"] { border-color: #739583; background: #edf4ef; }
+.entity-list small, .history small { display: block; }
+.score-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 10px; margin: 16px 0; }
+.metric { padding: 14px; background: #f6f7f3; border-radius: 10px; }
+.metric h3 { margin-top: 0; }
+.metric > strong { display: block; margin-top: 5px; font-size: 1.3rem; }
+.factor-list li, .history li { padding: 5px 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+.factor-list small { display: block; }
+.observations { display: grid; gap: 8px; margin-top: 12px; }
+.observation { border: 1px solid var(--line); padding: 10px; border-radius: 8px; }
+.observation p { margin: 2px 0; }
+textarea { width: 100%; resize: vertical; border: 1px solid #c8cdc4; border-radius: 8px; font: inherit; padding: 8px 10px; }
+.comparison { margin-top: 16px; }
+.coverage-summary { margin-bottom: 16px; }

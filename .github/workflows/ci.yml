@@ -8,7 +8,7 @@ permissions:
 
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       TEST_DATABASE_URL: postgresql://fda:fda_test@127.0.0.1:5432/fda_test
     services:

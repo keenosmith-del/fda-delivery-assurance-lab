@@ -34,3 +34,13 @@ The current confirmation step records durable acknowledgement state in the appli
 Demo inputs accept only synthetic candidate codes and three synthetic requisitions. The API binds to loopback by default and requires a write token for non-loopback binding. A configured token is required for every submission, including fault requests. Faults are disabled by default and cover two bounded request paths. The dev UI proxies same-origin API calls. The latest active attempt is stored in the browser tab session. Its token exists only in memory. The operation UUID allows read access to a synthetic record handle and audit events. HTTP request logs avoid payloads and tokens.
 
 A public deployment, request budgets and retention policy are tracked for a later iteration.
+
+## Workflow intelligence
+
+Migration `002_workflow_evidence.sql` adds observation windows, enrolled devices, device history, workflow candidates, supporting observations and append-only operator reviews. `npm run db:seed` installs six synthetic workflow candidates across nine endpoints using deterministic IDs and times. It can be rerun without duplicating fixtures or clearing reviews. Models are calculated from the persisted source inputs when read.
+
+Classification uses observable ordered similarity, frequency, sequence repetition and device corroboration. Suitability weighs operational assumptions, including permissions, exceptions, integrations and human judgment. The recommendation gates on evidence sufficiency and on high judgment or operational risk. Operator decisions persist independently of both calculated scores.
+
+Agent Health determines reporting from heartbeat recency at the fixed window end and determines evidence freshness from last successful observation. Permission history is separate. Missing intervals aggregate adjacent one-hour slots without successful observation. Counts cover enrolled endpoints in a synthetic sample.
+
+The frontend uses workspace route definitions for the implemented modules. Adoption Diagnostics and Outcome Verification can register new routes when their services and data are ready.

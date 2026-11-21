@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { Comparison } from './Comparison.tsx';
 import type { FormEvent } from 'react';
 import { scenarios, submission } from '../../../../shared/contracts/submissions.ts';
 import type { Operation, Scenario } from '../../../../shared/contracts/submissions.ts';
@@ -138,6 +139,7 @@ export function Reliability() {
           )}
         </section>
       </div>
+      <Comparison token={token} />
     </>
   );
 }

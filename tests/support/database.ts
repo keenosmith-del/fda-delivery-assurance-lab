@@ -8,12 +8,15 @@ import { migrate } from '../../backend/src/db/migrations.ts';
 
 const migrations = fileURLToPath(new URL('../../database/migrations/', import.meta.url));
 
-export async function openTestDatabase() {
+export async function openTestDatabase(): Promise<{ pool: Database; close: () => Promise<void>; connectionString: string | null }> {
   const nativeUrl = process.env.TEST_DATABASE_URL;
   if (nativeUrl) {
     const schema = `test_${randomUUID().replaceAll('-', '')}`;
     const admin = new Pool({ connectionString: nativeUrl });
-    const pool = new Pool({ connectionString: nativeUrl, options: `-c search_path=${schema}` });
+    const url = new URL(nativeUrl);
+    url.searchParams.set('options', `-c search_path=${schema}`);
+    const connectionString = url.toString();
+    const pool = new Pool({ connectionString });
     async function close() {
       await pool.end();
       try {
@@ -25,7 +28,7 @@ export async function openTestDatabase() {
     try {
       await admin.query(`CREATE SCHEMA ${schema}`);
       await migrate(pool, migrations);
-      return { pool, close };
+      return { pool, close, connectionString };
     } catch (error) {
       await close();
       throw error;
@@ -60,7 +63,7 @@ export async function openTestDatabase() {
 
   try {
     await migrate(pool, migrations);
-    return { pool, close: () => db.close() };
+    return { pool, close: () => db.close(), connectionString: null };
   } catch (error) {
     await db.close();
     throw error;
