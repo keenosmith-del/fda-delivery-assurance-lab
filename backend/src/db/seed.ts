@@ -3,7 +3,8 @@ import { seedMeasurement } from '../../../database/seeds/measurement.ts';
 import { readConfig } from '../config/env.ts';
 import { database } from './pool.ts';
 
-const pool = database(readConfig().DATABASE_URL);
+const config = readConfig('seed');
+const pool = database(config.DATABASE_URL, config.databaseOptions);
 try {
   await seedIntelligence(pool);
   await seedMeasurement(pool);

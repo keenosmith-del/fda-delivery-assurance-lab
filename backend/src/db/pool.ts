@@ -12,8 +12,12 @@ export interface Database extends SqlClient {
   connect(): Promise<SqlClient & { release(error?: Error): void }>;
 }
 
-export function database(url: string) {
-  return new Pool({ connectionString: url, connectionTimeoutMillis: 3_000, max: 8 });
+export function database(url: string, options: { max?: number; tls?: 'verify' | 'railway-private'; statementTimeoutMs?: number } = {}) {
+  return new Pool({
+    connectionString: url, max: options.max ?? 8, connectionTimeoutMillis: 3_000, idleTimeoutMillis: 30_000,
+    statement_timeout: options.statementTimeoutMs ?? 8_000,
+    ...(options.tls && { ssl: options.tls === 'verify' ? { rejectUnauthorized: true } : false }),
+  });
 }
 
 export async function transaction<T>(pool: Database, work: (client: SqlClient) => Promise<T>): Promise<T> {

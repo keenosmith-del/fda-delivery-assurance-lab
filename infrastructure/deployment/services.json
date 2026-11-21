@@ -1,0 +1,17 @@
+{
+  "api": {
+    "start": "node backend/dist/backend/src/server.js",
+    "preDeploy": "node backend/dist/backend/src/db/migrate.js",
+    "healthcheck": "/api/ready",
+    "replicas": 1
+  },
+  "confirmation-worker": {
+    "start": "node backend/dist/backend/src/workers/run.js",
+    "replicas": 1
+  },
+  "postgres": {
+    "majorVersion": 17,
+    "network": "private",
+    "persistentVolume": true
+  }
+}

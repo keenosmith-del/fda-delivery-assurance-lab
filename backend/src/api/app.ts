@@ -1,4 +1,4 @@
-import { createHash, timingSafeEqual } from 'node:crypto';
+import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
 import Fastify, { LogController } from 'fastify';
 import type { Database } from '../db/pool.ts';
 import { comparison } from '../../../shared/contracts/intelligence.ts';
@@ -8,24 +8,38 @@ import { registerIntelligence } from './intelligence.ts';
 import { fault, operationId, submission } from '../../../shared/contracts/submissions.ts';
 import { BeforeCommitError, getOperation, submit } from '../modules/submissions/service.ts';
 
+import { installSecurity } from './security.ts';
+import type { HostedAccess } from './security.ts';
+import { registerWeb } from './web.ts';
+import { queueStatus } from '../workers/telemetry.ts';
+
 interface Options {
   pool: Database;
   writeToken?: string;
   enableFaults?: boolean;
   logger?: boolean;
+  access?: HostedAccess;
+  uiDir?: string;
+  checkSchema?: () => Promise<boolean>;
 }
 
-export function createApp({ pool, writeToken, enableFaults, logger = false }: Options) {
-  const app = Fastify({ logger, bodyLimit: 4096, logController: new LogController({ disableRequestLogging: true }) });
+export function createApp({ pool, writeToken, enableFaults, logger = false, access, uiDir, checkSchema }: Options) {
+  const app = Fastify({ logger, genReqId: () => randomUUID(), requestIdHeader: false, requestTimeout: 12_000, bodyLimit: 4096, logController: new LogController({ disableRequestLogging: true }) });
   const digest = (value: string) => createHash('sha256').update(value).digest();
   const expectedToken = writeToken ? digest(writeToken) : null;
 
-  const canWrite = (token: string | undefined) => expectedToken === null ||
+  const canWrite = (token: string | undefined) => Boolean(access) || expectedToken === null ||
     (typeof token === 'string' && token.startsWith('Bearer ') && timingSafeEqual(expectedToken, digest(token.slice(7))));
 
-  app.addHook('onSend', async (_request, reply, payload) => {
-    reply.header('cache-control', 'no-store');
-    return payload;
+  const security = installSecurity(app, access);
+  const requestCounts = { success: 0, rejected: 0, throttled: 0, failed: 0 };
+  app.addHook('onResponse', async (request, reply) => {
+    if (reply.statusCode >= 500) requestCounts.failed++;
+    else if (reply.statusCode === 429) requestCounts.throttled++;
+    else if (reply.statusCode >= 400) requestCounts.rejected++;
+    else requestCounts.success++;
+    request.log.info({ method: request.method, route: request.routeOptions.url, status: reply.statusCode,
+      elapsedMs: Math.round(reply.elapsedTime) }, 'Request completed');
   });
 
   app.setErrorHandler((error, request, reply) => {
@@ -40,7 +54,9 @@ export function createApp({ pool, writeToken, enableFaults, logger = false }: Op
   app.get('/api/health', async () => ({ status: 'ok' }));
   app.get('/api/ready', async (request, reply) => {
     try {
-      await pool.query('SELECT 1 FROM confirmation_jobs LIMIT 1');
+      if (checkSchema) {
+        if (!await checkSchema()) return reply.code(503).send({ status: 'unavailable' });
+      } else await pool.query('SELECT 1 FROM confirmation_jobs LIMIT 1');
       return { status: 'ready' };
     } catch {
       request.log.warn({ reqId: request.id }, 'Database readiness check failed');
@@ -67,7 +83,7 @@ export function createApp({ pool, writeToken, enableFaults, logger = false }: Op
 
     const requestedFault = request.headers['x-lab-fault'];
     const mode = fault.safeParse(requestedFault);
-    if (requestedFault !== undefined && (!enableFaults || !mode.success)) {
+    if (requestedFault !== undefined && (!enableFaults || !security.mayInject(request) || !mode.success)) {
       return reply.code(400).send({ error: 'FAULT_NOT_AVAILABLE' });
     }
 
@@ -93,11 +109,13 @@ export function createApp({ pool, writeToken, enableFaults, logger = false }: Op
   });
 
   app.post('/api/lab/submission-comparison', async (request, reply) => {
-    if (!enableFaults) return reply.code(404).send({ error: 'FAULT_NOT_AVAILABLE' });
+    if (!enableFaults || !security.mayInject(request)) return reply.code(404).send({ error: 'FAULT_NOT_AVAILABLE' });
     if (!canWrite(request.headers.authorization)) return reply.code(401).send({ error: 'WRITE_TOKEN_REQUIRED' });
     return comparison.parse(await compareSubmissions(pool));
   });
 
+  app.get('/api/ops/status', async () => ({ ...(await queueStatus(pool)), requests: { ...requestCounts } }));
+  if (uiDir) registerWeb(app, uiDir);
   registerIntelligence(app, pool, canWrite);
   registerMeasurement(app, pool, canWrite);
   return app;

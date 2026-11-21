@@ -60,3 +60,7 @@ See the [verification matrix](docs/testing/VERIFICATION.md) for the local checks
 ---
 
 *Independent engineering case study. Not an official Attain or HIREXE product, partnership, endorsement, or production integration.*
+
+## Private deployment
+
+The root Dockerfile packages API, frontend and worker. See the [deployment runbook](docs/operations/DEPLOYMENT_RUNBOOK.md), [access policy](docs/operations/SECURITY_AND_ACCESS.md) and [staging verification](docs/testing/STAGING_VERIFICATION.md) for launch procedure, test coverage and provider status.

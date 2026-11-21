@@ -22,3 +22,9 @@
 - Added controlled failure before commit and lost acknowledgment after commit, with retry and lease recovery coverage.
 - Added the first operator workspace and seven submission scenarios.
 - Documented the implementation, source evidence, local operations and verification results.
+
+## Production readiness
+
+- Added hosted viewer, operator and staging demo access controls, same-origin delivery, secure headers and request quotas.
+- Added hosted startup validation, isolated fault controls, checksum readiness, worker heartbeats and protected operational counters.
+- Packaged the API, frontend and worker for deployment with repeatable CI restoration and browser verification.

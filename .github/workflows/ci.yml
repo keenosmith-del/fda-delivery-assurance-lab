@@ -37,3 +37,16 @@ jobs:
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+      - run: npm run test:e2e:private
+      - name: Verify disposable PostgreSQL backup and restore
+        run: bash scripts/verify-backup-ci.sh "${{ job.services.postgres.id }}"
+      - name: Build and check the deployment image
+        run: |
+          docker build -t fda-release .
+          docker run --rm --entrypoint node fda-release --input-type=module -e '
+            import { access } from "node:fs/promises";
+            await import("./backend/dist/backend/src/api/app.js");
+            await access("frontend/dist/index.html");
+            await access("backend/dist/backend/src/workers/run.js");
+            await access("database/migrations/004_worker_operations.sql");
+          '

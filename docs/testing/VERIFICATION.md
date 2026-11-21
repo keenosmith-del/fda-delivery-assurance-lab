@@ -7,6 +7,7 @@
 | First merge `bad4119518e22f68521b9e756679ef542d94d790` | [Main run 44922725263](https://github.com/keenosmith-del/fda-delivery-assurance-lab/actions/runs/44922725263), 21 November 2026. Successful after [PR #1](https://github.com/keenosmith-del/fda-delivery-assurance-lab/pull/1) merged. |
 | Adoption and outcome local checks | Type checks and both production builds passed. 21 passed and four native-only skips using embedded PostgreSQL. Local Chromium failed at macOS Mach port check-in, before browser assertions. |
 | Adoption and outcome commit `ecdf13a20f9fe1aa13f35fcc5b508ffce29a9e9c` | [Branch run 44923886250](https://github.com/keenosmith-del/fda-delivery-assurance-lab/actions/runs/44923886250) and [PR run 44923911575](https://github.com/keenosmith-del/fda-delivery-assurance-lab/actions/runs/44923911575), 21 November 2026. Both completed successfully with 25 native backend tests and seven Chromium tests. |
+| Production readiness local checks | Type checks and builds passed. 28 embedded PostgreSQL tests passed and five native-only tests were skipped locally. Both local browser commands started their test servers, but macOS denied Chromium's Mach port check-in before assertions. |
 | Production deployment and presentation | Pending separate public access, rate limiting and security review, and user visual approval. |
 
 ## Reproduce
