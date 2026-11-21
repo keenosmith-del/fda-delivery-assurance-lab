@@ -144,6 +144,10 @@ describe.runIf(Boolean(process.env.TEST_DATABASE_URL))(
 
     it("recovers across a real interruption of this API’s database connections", async () => {
       const upstream = new URL(fixture.connectionString!);
+      const databaseTarget = {
+        host: upstream.hostname,
+        port: Number(upstream.port || 5432),
+      };
       const connections = new Set<Socket>();
       let available = true;
       const proxy = createServer((peer) => {
@@ -151,10 +155,7 @@ describe.runIf(Boolean(process.env.TEST_DATABASE_URL))(
           peer.destroy();
           return;
         }
-        const database = createConnection({
-          host: upstream.hostname,
-          port: Number(upstream.port || 5432),
-        });
+        const database = createConnection(databaseTarget);
         const drop = () => {
           connections.delete(peer);
           peer.destroy();
