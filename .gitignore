@@ -1,0 +1,46 @@
+# Node / TypeScript
+node_modules/
+dist/
+build/
+coverage/
+.next/
+.turbo/
+*.tsbuildinfo
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Test outputs
+playwright-report/
+test-results/
+.nyc_output/
+
+# Python reference implementation
+.venv/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+
+# Local databases, diagnostics and installers
+*.sqlite
+*.sqlite3
+*.db
+*.dmg
+*.app/
+*.log
+logs/
+
+# Large/raw recordings and temporary exports
+*.mp4
+*.mov
+*.zip
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
