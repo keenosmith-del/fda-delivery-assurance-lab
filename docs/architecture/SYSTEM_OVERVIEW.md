@@ -48,3 +48,8 @@ The workspace registers Adoption Diagnostics and Outcome Verification as separat
 ## Hosted operation
 
 The deployment image packages the compiled frontend and API on one protected HTTPS origin. The independently managed worker shares a private PostgreSQL connection and reports heartbeat through migration 004. Queue and request health are available in the protected operator API. See the [deployment runbook](../operations/DEPLOYMENT_RUNBOOK.md) and [access policy](../operations/SECURITY_AND_ACCESS.md).
+
+
+## Review evidence
+
+Workflow Evidence, ATS Reliability, Adoption Diagnostics and Outcome Verification provide authenticated JSON downloads in hosted mode. The receipts identify their source revision, persisted inputs and calculation version. ATS receipts include controlled failure decisions, with rollback decisions recorded separately from the operation transaction. See [evidence integrity](EVIDENCE_INTEGRITY.md) for the calculations, attribution limits and evidence boundaries.

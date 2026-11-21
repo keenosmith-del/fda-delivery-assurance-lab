@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { entityId } from './intelligence.ts';
+import { actorRole, entityId, revisionId } from './intelligence.ts';
 
 const count = z.number().int().nonnegative();
 const rate = z.number().min(0).max(1).nullable();
@@ -34,14 +34,19 @@ export const adoptionDetail = automation.extend({
   periods: z.array(period),
   population: z.array(z.object({ periodId: entityId, operatorId: entityId, eligible: z.boolean(), attempted: count })),
   diagnostics: z.array(diagnostic),
+  supportingObservations: z.array(z.object({ periodId: entityId, category: barrier, count })),
   findings: z.array(finding),
   interventions: z.array(intervention),
   followUps: z.array(followUp),
-  audit: z.array(z.object({ event: z.string(), subjectId: uuid, occurredAt: z.iso.datetime() })),
+  audit: z.array(z.object({
+    id: z.string(), event: z.string(), subjectId: uuid, occurredAt: z.iso.datetime(),
+    actorRole: actorRole.nullable(), sourceRevision: revisionId.nullable(),
+  })),
 });
 
 export const outcomeMeasurement = z.object({
   measuredItems: count, humanHandlingSeconds: count, method: z.string(), source: z.string(), reviewed: z.boolean(),
+  reviewProvenance: z.literal('synthetic-fixture').nullable().optional(),
 });
 export const outcome = z.object({
   automation, baseline: period, comparison: period,
@@ -49,6 +54,14 @@ export const outcome = z.object({
   grossEstimatedSeconds: count, reworkSeconds: count, humanReviewSeconds: count, netEstimatedSeconds: z.number().int(),
   baselineMeasurement: outcomeMeasurement.nullable(), comparisonMeasurement: outcomeMeasurement.nullable(),
   verifiedSeconds: z.number().int().nullable(), verificationLimits: z.array(z.string()),
+  reconciliation: z.object({
+    baselineObservedEligibility: rate,
+    comparisonObservedEligibility: rate,
+    modeledMinusReviewedSeconds: z.number().int().nullable(),
+    modeledScope: z.string(),
+    reviewedScope: z.string(),
+    limitation: z.string(),
+  }),
 });
 export const opportunityModel = z.object({
   terms: z.array(z.object({ automation: z.string(), baselineVolume: count, modeledEligibilityBps: count, modeledOccurrences: z.number() })),

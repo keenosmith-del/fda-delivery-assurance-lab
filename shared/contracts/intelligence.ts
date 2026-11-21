@@ -9,7 +9,11 @@ export const reviewInput = z.strictObject({
   suitability: z.enum(['approve', 'reject']),
   reason: z.string().trim().min(5).max(500),
 });
-export const review = reviewInput.extend({ id: z.string(), reviewedAt: instant });
+export const actorRole = z.enum(['operator', 'demo', 'local-token', 'local-open']);
+export const revisionId = z.string().regex(/^[0-9a-f]{40}$/);
+export const review = reviewInput.extend({ id: z.string(), reviewedAt: instant,
+  actorRole: actorRole.nullable(), sourceRevision: revisionId.nullable(),
+});
 export const assessment = z.object({
   score, factors: z.array(z.object({ name: z.string(), score, weight: z.number() })),
 });
@@ -23,6 +27,11 @@ export const taskSummary = z.object({
 });
 export const taskDetail = taskSummary.extend({
   expectedSequence: labels,
+  scoring: z.object({
+    version: z.string(), method: z.string(), limitations: labels,
+    suitabilityInputs,
+    observationWindow: z.object({ id: entityId, start: instant, end: instant }).nullable(),
+  }),
   evidence: z.array(z.object({
     id: entityId, deviceId: entityId, observedAt: instant, sequence: labels,
     durationSeconds: z.number(), exception: z.boolean(),

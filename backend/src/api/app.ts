@@ -6,11 +6,13 @@ import { compareSubmissions } from '../modules/submissions/comparison.ts';
 import { registerMeasurement } from './measurement.ts';
 import { registerIntelligence } from './intelligence.ts';
 import { fault, operationId, submission } from '../../../shared/contracts/submissions.ts';
-import { BeforeCommitError, getOperation, submit } from '../modules/submissions/service.ts';
+import { BeforeCommitError, getOperation, getOperationEvidence, recordFaultReceipt, submit } from '../modules/submissions/service.ts';
 
 import { installSecurity } from './security.ts';
 import type { HostedAccess } from './security.ts';
 import { registerWeb } from './web.ts';
+import { evidenceDownload, sourceRevision } from './evidence.ts';
+import type { ExportContext } from './evidence.ts';
 import { queueStatus } from '../workers/telemetry.ts';
 
 interface Options {
@@ -20,10 +22,12 @@ interface Options {
   logger?: boolean;
   access?: HostedAccess;
   uiDir?: string;
+  environment?: ExportContext['mode'];
+  revision?: string;
   checkSchema?: () => Promise<boolean>;
 }
 
-export function createApp({ pool, writeToken, enableFaults, logger = false, access, uiDir, checkSchema }: Options) {
+export function createApp({ pool, writeToken, enableFaults, logger = false, access, uiDir, checkSchema, environment = 'local', revision }: Options) {
   const app = Fastify({ logger, genReqId: () => randomUUID(), requestIdHeader: false, requestTimeout: 12_000, bodyLimit: 4096, logController: new LogController({ disableRequestLogging: true }) });
   const digest = (value: string) => createHash('sha256').update(value).digest();
   const expectedToken = writeToken ? digest(writeToken) : null;
@@ -32,6 +36,12 @@ export function createApp({ pool, writeToken, enableFaults, logger = false, acce
     (typeof token === 'string' && token.startsWith('Bearer ') && timingSafeEqual(expectedToken, digest(token.slice(7))));
 
   const security = installSecurity(app, access);
+  const exportContext = { mode: environment, revision: sourceRevision(revision) };
+  const actor = (request: Parameters<typeof security.role>[0]) => {
+    const role = security.role(request);
+    return { role: role === 'operator' || role === 'demo' ? role : writeToken ? 'local-token' as const : 'local-open' as const,
+      sourceRevision: exportContext.revision };
+  };
   const requestCounts = { success: 0, rejected: 0, throttled: 0, failed: 0 };
   app.addHook('onResponse', async (request, reply) => {
     if (reply.statusCode >= 500) requestCounts.failed++;
@@ -72,6 +82,14 @@ export function createApp({ pool, writeToken, enableFaults, logger = false, acce
     return result;
   });
 
+  app.get<{ Params: { id: string } }>('/api/operations/:id/export', async (request, reply) => {
+    const id = operationId.safeParse(request.params.id);
+    if (!id.success) return reply.code(400).send({ error: 'INVALID_OPERATION_ID' });
+    const result = await getOperationEvidence(pool, id.data.toLowerCase());
+    if (!result) return reply.code(404).send({ error: 'OPERATION_NOT_FOUND' });
+    return evidenceDownload(reply, `${result.operationId}-ats-evidence`, exportContext, 'synthetic ATS recovery', null, result);
+  });
+
   app.post('/api/submissions', async (request, reply) => {
     if (!canWrite(request.headers.authorization)) {
       return reply.code(401).send({ error: 'WRITE_TOKEN_REQUIRED' });
@@ -88,8 +106,9 @@ export function createApp({ pool, writeToken, enableFaults, logger = false, acce
     }
 
     const id = key.data.toLowerCase();
+    const receipt = mode.data && { requestId: request.id, fault: mode.data, actor: actor(request) };
     try {
-      const result = await submit(pool, id, payload.data, mode.data === 'before-commit');
+      const result = await submit(pool, id, payload.data, mode.data === 'before-commit', receipt);
       request.log.info({ reqId: request.id, operationId: id, result }, 'Submission processed');
       if (result === 'conflict') return reply.code(409).send({ error: 'PAYLOAD_CONFLICT' });
       if (result === 'created' && mode.data === 'lost-ack') {
@@ -100,7 +119,8 @@ export function createApp({ pool, writeToken, enableFaults, logger = false, acce
       return reply.code(state.state === 'pending_confirmation' ? 202 : 200)
         .header('location', `/api/operations/${id}`).send(state);
     } catch (error) {
-      if (error instanceof BeforeCommitError) {
+      if (error instanceof BeforeCommitError && receipt) {
+        await recordFaultReceipt(pool, id, receipt);
         request.log.info({ reqId: request.id, operationId: id }, 'Synthetic interruption rolled back');
         return reply.code(504).send({ error: 'SIMULATED_PRE_COMMIT_TIMEOUT' });
       }
@@ -116,7 +136,7 @@ export function createApp({ pool, writeToken, enableFaults, logger = false, acce
 
   app.get('/api/ops/status', async () => ({ ...(await queueStatus(pool)), requests: { ...requestCounts } }));
   if (uiDir) registerWeb(app, uiDir);
-  registerIntelligence(app, pool, canWrite);
-  registerMeasurement(app, pool, canWrite);
+  registerIntelligence(app, pool, canWrite, actor, exportContext);
+  registerMeasurement(app, pool, canWrite, actor, exportContext);
   return app;
 }

@@ -141,6 +141,6 @@ describe('measurement APIs and PostgreSQL persistence', () => {
     expect((await app.inject('/api/outcomes/intake-assist?baseline=intake-assist-follow-up&comparison=intake-assist-baseline')).statusCode).toBe(404);
     const exported = await app.inject(valid.replace('?', '/export?'));
     expect(exported.headers['content-disposition']).toContain('intake-assist-outcome-evidence.json');
-    expect(exported.json()).toEqual({ evidenceType: 'synthetic lab measurements', ...summary.json() });
+    expect(exported.json()).toMatchObject({ evidenceType: 'synthetic lab measurements', ...summary.json() });
   });
 });

@@ -9,8 +9,8 @@ The goal is **not to recreate or replace Attain**. It is to develop and demonstr
 ## Engineering workstreams
 
 1. **ATS reliability and recovery** — Design a transaction-safe submission flow with idempotency, durable operation state, retry recovery, asynchronous confirmation, auditability, and reproducible failure injection.
-2. **Workflow evidence and confidence** — Inspect detected tasks, supporting evidence, classification confidence, automation suitability, and gaps in endpoint reporting coverage.
-3. **Adoption diagnostics** — Investigate low-adoption automations, classify likely causes, document corrective actions, and track follow-up measurements.
+2. **Workflow evidence and scoring** — Inspect detected tasks, supporting evidence, heuristic classification and automation suitability scores, and gaps in endpoint reporting coverage.
+3. **Adoption diagnostics** — Investigate low-adoption automations, record hypotheses about possible barriers, document corrective actions, and track follow-up measurements.
 4. **Outcome verification** — Distinguish observed activity, modeled savings, and verified improvements; calculate adoption-adjusted results while accounting for failures and rework.
 
 ## Current implementation
@@ -64,3 +64,6 @@ See the [verification matrix](docs/testing/VERIFICATION.md) for the local checks
 ## Private deployment
 
 The root Dockerfile packages API, frontend and worker. See the [deployment runbook](docs/operations/DEPLOYMENT_RUNBOOK.md), [access policy](docs/operations/SECURITY_AND_ACCESS.md) and [staging verification](docs/testing/STAGING_VERIFICATION.md) for launch procedure, test coverage and provider status.
+
+
+See [Evidence integrity](docs/architecture/EVIDENCE_INTEGRITY.md) for the scoring rubric, calculation inputs, and interpretation of synthetic outcome and adoption comparisons. The verification workflow attaches the six generated JSON receipts to each successful release run.

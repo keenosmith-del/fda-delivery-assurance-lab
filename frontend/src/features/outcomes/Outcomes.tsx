@@ -71,6 +71,7 @@ function OutcomeWorkspace({ id }: { id: string }) {
           <h2>Modeled benefit</h2>
           <dl>
             <dt>Baseline eligibility assumption</dt><dd>{percent(evidence.baseline.modeledEligibilityBps / 10000)}</dd>
+            <dt>Baseline observed eligibility</dt><dd>{percent(evidence.reconciliation.baselineObservedEligibility)}</dd>
             <dt>Estimated weekly opportunity</dt><dd>{evidence.modeledWeeklyOccurrences} occurrences</dd>
             <dt>Comparison user adoption</dt><dd>{percent(evidence.comparison.adoption)}</dd>
             <dt>Adoption-adjusted opportunity</dt><dd>{evidence.adoptionAdjustedOpportunity ?? 'Unavailable'}{evidence.adoptionAdjustedOpportunity !== null && ' occurrences'}</dd>
@@ -83,6 +84,9 @@ function OutcomeWorkspace({ id }: { id: string }) {
           <h3>Verified synthetic outcome</h3>
           {evidence.verifiedSeconds !== null ? <p>Reviewed time studies recorded a difference of <strong>{minutes(evidence.verifiedSeconds)}</strong> in human handling across matched volumes.</p>
             : <><p>Verification incomplete.</p><ul>{evidence.verificationLimits.map(item => <li key={item}>{item}</li>)}</ul></>}
+          {evidence.reconciliation.modeledMinusReviewedSeconds !== null &&
+            <p>Modeled net minus reviewed difference · <strong>{minutes(evidence.reconciliation.modeledMinusReviewedSeconds)}</strong></p>}
+          <p>{evidence.reconciliation.modeledScope} {evidence.reconciliation.reviewedScope} {evidence.reconciliation.limitation}</p>
         </section>
       </div>}
   </>;

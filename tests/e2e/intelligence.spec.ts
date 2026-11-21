@@ -6,8 +6,11 @@ test('evaluates a task and reloads its persisted review', async ({ page }) => {
   await navigation.getByRole('link', { name: 'Discover' }).click();
   await page.getByLabel('Filter tasks').fill('offer');
   await page.getByRole('button', { name: /Candidate offer review/ }).click();
-  await expect(page.getByRole('heading', { name: 'Classification confidence' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Classification score' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Automation suitability' })).toBeVisible();
+  await expect(page.getByText(/Deterministic weighted engineering heuristics/)).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Download workflow evidence JSON' }))
+    .toHaveAttribute('href', '/api/workflow/tasks/offer-review/export');
   await page.getByText('Supporting observations (12)').click();
   await expect(page.getByText('ATS / inspect feedback').last()).toBeVisible();
   await page.getByLabel('Classification decision').selectOption('approve');

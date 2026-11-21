@@ -118,6 +118,8 @@ export function Reliability() {
           {attempt && !busy && (problem || !record || record.state === 'pending_confirmation') && (
             <button type="button" className="secondary" onClick={() => void run({ ...attempt, token }, true)}>Recover this operation</button>
           )}
+          {attempt && record && !busy &&
+            <a className="secondary export-link" href={`/api/operations/${attempt.id}/export`} download>Download ATS evidence JSON</a>}
           {record && (
             <>
               <h3>Database result</h3>

@@ -8,3 +8,6 @@
 | Supplied static inspector report, Attain Telemetry Agent v0.5.15 | Reports a macOS Universal background bundle and declared permissions. This informs separate enrolment, permission and heartbeat states in the future Agent Health module. | Reviewed the report. Runtime behaviour, Gatekeeper status and private implementation are unverified. Reported DMG SHA-256 `f4c637beb8e513b4560fe37bb4ded3dde269cd95d25fe1ec2f88e1992baee5e1`. |
 
 The ATS application uses generated candidate codes and an independent schema. Request failures and test outcomes are local synthetic experiments. The lab records no workplace telemetry.
+
+
+The independent engineering review of the lab walkthrough identified the need for exportable evidence and clearer claims. It evaluated the synthetic application and reviewed source at `0a7f294d62bdfcbf4e2f818ca160b4a4da2a9632`. It supplies no new vendor telemetry or production measurements. See [evidence integrity](../architecture/EVIDENCE_INTEGRITY.md) for the reproducible lab results and explicit inference limits.

@@ -3,7 +3,8 @@ import { adoptionDetail, barrier } from '../../../../shared/contracts/measuremen
 import type { Diagnostic, DiagnosisInput, FollowUpInput, InterventionInput } from '../../../../shared/contracts/measurement.ts';
 import type { Database, SqlClient } from '../../db/pool.ts';
 import { transaction } from '../../db/pool.ts';
-import { diagnosticSignals } from './diagnostics.ts';
+import type { EvidenceActor } from '../../api/evidence.ts';
+import { compareAdoption, diagnosticSignals } from './diagnostics.ts';
 import { listAutomations, listPeriods } from './measurements.ts';
 
 export class AdoptionError extends Error {
@@ -34,13 +35,15 @@ async function collectDiagnostics(client: SqlClient, automationId: string) {
     signals.push({ periodId: row.period_id, category: barrier.parse(row.category),
       observation: `${row.evidence} (${row.observed_count}).`, possibleExplanation: explanations[row.category] });
   }
-  return { periods, signals };
+  return { periods, signals, supportingObservations: observations.rows.map(row => ({
+    periodId: row.period_id, category: row.category, count: row.observed_count,
+  })) };
 }
 
-export async function getAdoption(pool: Database, id: string) {
+export async function getAdoption(pool: SqlClient, id: string) {
   const definition = (await listAutomations(pool)).find(item => item.id === id);
   if (!definition) return null;
-  const [{ periods, signals }, population, findings, interventions, followUps, auditRows] = await Promise.all([
+  const [{ periods, signals, supportingObservations }, population, findings, interventions, followUps, auditRows] = await Promise.all([
     collectDiagnostics(pool, id),
     pool.query(`
       SELECT a.period_id AS "periodId", a.operator_id AS "operatorId", a.eligible,
@@ -67,21 +70,21 @@ export async function getAdoption(pool: Database, id: string) {
       WHERE f.automation_id = $1 ORDER BY p.starts_on, u.id
     `, [id]),
     pool.query(`
-      SELECT event, subject_id AS "subjectId", occurred_at FROM lab_adoption_audit WHERE automation_id = $1 ORDER BY id DESC
+      SELECT id::text, event, subject_id AS "subjectId", occurred_at, actor_role AS "actorRole", source_revision AS "sourceRevision" FROM lab_adoption_audit WHERE automation_id = $1 ORDER BY id DESC
     `, [id]),
   ]);
-  return adoptionDetail.parse({ ...definition, periods, population: population.rows, diagnostics: signals, findings: findings.rows,
+  return adoptionDetail.parse({ ...definition, periods, population: population.rows, diagnostics: signals, supportingObservations, findings: findings.rows,
     interventions: interventions.rows.map(({ implemented_at, ...row }) => ({ ...row, implementedAt: implemented_at?.toISOString() ?? null })),
     followUps: followUps.rows, audit: auditRows.rows.map(({ occurred_at, ...row }) => ({ ...row, occurredAt: occurred_at.toISOString() })),
   });
 }
 
-async function audit(client: SqlClient, automationId: string, subject: string, event: string) {
-  await client.query('INSERT INTO lab_adoption_audit (automation_id, subject_id, event) VALUES ($1, $2, $3)',
-    [automationId, subject, event]);
+async function audit(client: SqlClient, automationId: string, subject: string, event: string, actor: EvidenceActor) {
+  await client.query(`INSERT INTO lab_adoption_audit (automation_id, subject_id, event, actor_role, source_revision)
+    VALUES ($1, $2, $3, $4, $5)`, [automationId, subject, event, actor.role, actor.sourceRevision]);
 }
 
-export async function recordDiagnosis(pool: Database, automationId: string, input: DiagnosisInput) {
+export async function recordDiagnosis(pool: Database, automationId: string, input: DiagnosisInput, actor: EvidenceActor) {
   return transaction(pool, async client => {
     const { periods, signals } = await collectDiagnostics(client, automationId);
     if (!periods.some(item => item.id === input.periodId)) throw new AdoptionError(404, 'PERIOD_NOT_FOUND');
@@ -92,12 +95,12 @@ export async function recordDiagnosis(pool: Database, automationId: string, inpu
       INSERT INTO lab_adoption_findings (id, automation_id, period_id, category, evidence, hypothesis)
       VALUES ($1, $2, $3, $4, $5, $6)
     `, [id, automationId, input.periodId, input.category, signal.observation, input.hypothesis]);
-    await audit(client, automationId, id, 'diagnosis-recorded');
+    await audit(client, automationId, id, 'diagnosis-recorded', actor);
     return { id };
   });
 }
 
-export async function planIntervention(pool: Database, automationId: string, input: InterventionInput) {
+export async function planIntervention(pool: Database, automationId: string, input: InterventionInput, actor: EvidenceActor) {
   return transaction(pool, async client => {
     const result = await client.query<{ ends_on: string }>(`
       SELECT p.ends_on::text FROM lab_adoption_findings f JOIN lab_measurement_periods p ON p.id = f.period_id
@@ -108,7 +111,7 @@ export async function planIntervention(pool: Database, automationId: string, inp
     const id = randomUUID();
     await client.query('INSERT INTO lab_adoption_interventions (id, finding_id, action, owner, follow_up_on) VALUES ($1, $2, $3, $4, $5)',
       [id, input.findingId, input.action, input.owner, input.followUpOn]);
-    await audit(client, automationId, id, 'intervention-planned');
+    await audit(client, automationId, id, 'intervention-planned', actor);
     return { id };
   });
 }
@@ -124,7 +127,7 @@ async function lockIntervention(client: SqlClient, automationId: string, interve
   return result.rows[0];
 }
 
-export async function implementIntervention(pool: Database, automationId: string, id: string, implementedOn: string) {
+export async function implementIntervention(pool: Database, automationId: string, id: string, implementedOn: string, actor: EvidenceActor) {
   return transaction(pool, async client => {
     const current = await lockIntervention(client, automationId, id);
     if (current.implemented_on && current.implemented_on !== implementedOn) {
@@ -137,13 +140,13 @@ export async function implementIntervention(pool: Database, automationId: string
     if (!current.implemented_on) {
       await client.query('UPDATE lab_adoption_interventions SET implemented_on = $2, implemented_at = clock_timestamp() WHERE id = $1',
         [id, implementedOn]);
-      await audit(client, automationId, id, 'intervention-implemented');
+      await audit(client, automationId, id, 'intervention-implemented', actor);
     }
     return { id };
   });
 }
 
-export async function recordFollowUp(pool: Database, automationId: string, interventionId: string, input: FollowUpInput) {
+export async function recordFollowUp(pool: Database, automationId: string, interventionId: string, input: FollowUpInput, actor: EvidenceActor) {
   return transaction(pool, async client => {
     const current = await lockIntervention(client, automationId, interventionId);
     if (!current.implemented_on) throw new AdoptionError(409, 'INTERVENTION_NOT_IMPLEMENTED');
@@ -156,7 +159,45 @@ export async function recordFollowUp(pool: Database, automationId: string, inter
       VALUES ($1, $2, $3, $4) ON CONFLICT (intervention_id, period_id) DO NOTHING
     `, [id, interventionId, input.periodId, input.notes]);
     if (!result.rowCount) throw new AdoptionError(409, 'FOLLOW_UP_ALREADY_RECORDED');
-    await audit(client, automationId, id, 'follow-up-recorded');
+    await audit(client, automationId, id, 'follow-up-recorded', actor);
     return { id };
   });
+}
+
+export async function getAdoptionEvidence(pool: Database, id: string) {
+  return transaction(pool, async client => {
+    const record = await getAdoption(client, id);
+    if (!record) return null;
+    const { periods, findings, interventions, followUps, audit } = record;
+    const byPeriod = new Map(periods.map(period => [period.id, period]));
+    const byFinding = new Map(findings.map(finding => [finding.id, finding]));
+    const byIntervention = new Map(interventions.map(intervention => [intervention.id, intervention]));
+    const first = periods[0];
+    const last = periods.at(-1);
+    return {
+      automation: { id: record.id, name: record.name, workflow: record.workflow, taskId: record.taskId },
+      periods,
+      diagnostics: record.diagnostics,
+      supportingObservations: record.supportingObservations,
+      findings: findings.map(({ id, periodId, category, evidence }) => ({ id, periodId, category, evidence })),
+      interventions: interventions.map(({ id, findingId, followUpOn, implementedOn, implementedAt }) =>
+        ({ id, findingId, followUpOn, implementedOn, implementedAt })),
+      followUps: followUps.map(({ id, interventionId, periodId }) => {
+        const intervention = byIntervention.get(interventionId);
+        const finding = intervention && byFinding.get(intervention.findingId);
+        const before = finding && byPeriod.get(finding.periodId);
+        const after = byPeriod.get(periodId);
+        return { id, interventionId, periodId, comparison: before && after ? compareAdoption(before, after) : null };
+      }),
+      audit: audit.reverse(),
+      observedComparison: first && last && first !== last ? compareAdoption(first, last) : null,
+      provenance: {
+        sources: ['lab_measurement_periods', 'lab_period_population', 'lab_opportunities', 'lab_executions', 'lab_adoption_events',
+          'lab_adoption_observations', 'lab_adoption_findings', 'lab_adoption_interventions', 'lab_adoption_follow_ups', 'lab_adoption_audit'],
+        limitations: ['Operator identifiers and operator-authored hypotheses, actions, owners and notes are excluded.',
+          'Audit IDs are ordered by insertion. Attribution identifies credential roles, with null for legacy records.'],
+      },
+      units: { rate: 'fraction', delta: 'percentage points', opportunities: 'count', duration: 'seconds', eligibilityAssumption: 'basis points' },
+    };
+  }, true);
 }

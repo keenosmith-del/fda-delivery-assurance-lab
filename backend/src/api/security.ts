@@ -81,6 +81,7 @@ export function installSecurity(app: FastifyInstance, access?: HostedAccess) {
   });
 
   return {
+    role: (request: FastifyRequest) => roles.get(request),
     mayInject: (request: FastifyRequest) => !access || roles.get(request) === 'demo',
   };
 }

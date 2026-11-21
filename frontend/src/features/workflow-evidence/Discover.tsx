@@ -92,7 +92,7 @@ export function Discover() {
         {task && <>
           <p>{task.recommendation}</p>
           <div className="score-grid">
-            {([['Classification confidence', task.classification], ['Automation suitability', task.suitability]] as const).map(([name, result]) => (
+            {([['Classification score', task.classification], ['Automation suitability', task.suitability]] as const).map(([name, result]) => (
               <section key={name} className="metric"><h3>{name}</h3><strong>{result.score}<small> / 100</small></strong>
                 <details><summary>Scoring factors</summary><ul className="factor-list">{result.factors.map(factor => (
                   <li key={factor.name}><span>{factor.name}</span><small>{factor.score}/100 · {factor.weight}% weight</small></li>
@@ -100,6 +100,8 @@ export function Discover() {
               </section>
             ))}
           </div>
+          <p>{task.scoring.method} {task.scoring.limitations[0]}</p>
+          <a className="secondary export-link" href={`/api/workflow/tasks/${task.id}/export`} download>Download workflow evidence JSON</a>
           <h3>Expected sequence</h3>
           <ol>{task.expectedSequence.map(step => <li key={step}>{step}</li>)}</ol>
           <h3>Evidence gaps</h3>
@@ -115,7 +117,7 @@ export function Discover() {
           <h3>Review history</h3>
           {task.reviews.length ? <ol className="history">{task.reviews.map(item => <li key={item.id}>
             <strong>Classification: {item.classification} · Suitability: {item.suitability}</strong>
-            <div>{item.reason}</div><small>{dateLabel(item.reviewedAt)}</small>
+            <div>{item.reason}</div><small>{dateLabel(item.reviewedAt)} · {item.actorRole ?? 'Role unavailable'}</small>
           </li>)}</ol> : <p>No reviews recorded.</p>}
         </>}
       </section>

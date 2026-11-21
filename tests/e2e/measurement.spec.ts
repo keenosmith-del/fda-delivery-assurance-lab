@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 
 test('records an adoption diagnosis, intervention and follow-up with persisted decision history', async ({ page }) => {
@@ -16,11 +17,14 @@ test('records an adoption diagnosis, intervention and follow-up with persisted d
   await page.getByLabel('Follow-up notes').fill('Review the subsequent observed usage and reliability.');
   await page.getByRole('button', { name: 'Record follow-up' }).click();
   await expect(page.getByText(/Adoption 50% → 75%/)).toBeVisible();
+  await expect(page.getByText(/Reliability 93.3% → 86.4% · Coverage 100% → 87%/)).toBeVisible();
+  await expect(page.getByText('This synthetic comparison does not establish a causal effect.')).toBeVisible();
   await page.reload();
   await page.getByLabel('Automation', { exact: true }).selectOption('pipeline-digest');
   await expect(page.getByText('Review the subsequent observed usage and reliability.')).toBeVisible();
   await page.getByText('Decision audit (4)').click();
   await expect(page.getByText(/follow up recorded/)).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Download adoption evidence JSON' })).toHaveAttribute('href', '/api/adoption/pipeline-digest/export');
 });
 
 test('examines modeled and incomplete outcomes and downloads evidence', async ({ page }) => {
@@ -32,5 +36,19 @@ test('examines modeled and incomplete outcomes and downloads evidence', async ({
   await expect(page.getByText('One or both opportunity windows are incomplete.')).toBeVisible();
   const downloading = page.waitForEvent('download');
   await page.getByRole('link', { name: 'Download evidence JSON' }).click();
-  expect((await downloading).suggestedFilename()).toBe('pipeline-digest-outcome-evidence.json');
+  const download = await downloading;
+  expect(download.suggestedFilename()).toBe('pipeline-digest-outcome-evidence.json');
+  const evidence = JSON.parse(await readFile(await download.path(), 'utf8'));
+  expect(evidence).toMatchObject({ verifiedSeconds: null, comparisonMeasurement: null, netEstimatedSeconds: 2575 });
+});
+
+test('downloads the complete outcome with the modeled and reviewed totals', async ({ page }) => {
+  await page.goto('/#outcomes');
+  await expect(page.getByText('448.6 min', { exact: true })).toBeVisible();
+  const downloading = page.waitForEvent('download');
+  await page.getByRole('link', { name: 'Download evidence JSON' }).click();
+  const download = await downloading;
+  expect(download.suggestedFilename()).toBe('intake-assist-outcome-evidence.json');
+  const evidence = JSON.parse(await readFile(await download.path(), 'utf8'));
+  expect(evidence).toMatchObject({ calculationVersion: 'outcome-comparison/v1', verifiedSeconds: 22000, netEstimatedSeconds: 48915 });
 });

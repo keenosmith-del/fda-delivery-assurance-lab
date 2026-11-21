@@ -62,10 +62,12 @@ export async function seedMeasurement(pool: Database) {
         `, [periodId, followUp ? 1 : 4, followUp ? 1 : 3, 2, followUp ? 1 : 2]);
         if (item.id === 'intake-assist' || !followUp) {
           await client.query(`
-            INSERT INTO lab_outcome_measurements VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT DO NOTHING
+            INSERT INTO lab_outcome_measurements
+              (period_id, measured_items, human_handling_seconds, method, source, reviewed, review_provenance)
+            VALUES ($1, $2, $3, $4, $5, $6, 'synthetic-fixture') ON CONFLICT DO NOTHING
           `, [periodId, observed, followUp ? 62_000 : observed * item.seconds,
             'End-to-end human handling, including review and rework',
-            'Synthetic time study, independently recorded fixture totals', true]);
+            'Synthetic time study, separately seeded fixture totals', true]);
         }
       }
     }

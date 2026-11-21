@@ -10,6 +10,8 @@ test('recovers a lost acknowledgment and displays the persisted record', async (
   await expect(page.getByText('replayed', { exact: true })).toBeVisible();
 
   const operationId = await page.locator('dd code').first().textContent();
+  await expect(page.getByRole('link', { name: 'Download ATS evidence JSON' }))
+    .toHaveAttribute('href', `/api/operations/${operationId}/export`);
   await page.reload();
   await expect(page.locator('dd code').first()).toHaveText(operationId!);
   await page.getByRole('button', { name: 'Recover this operation' }).click();
