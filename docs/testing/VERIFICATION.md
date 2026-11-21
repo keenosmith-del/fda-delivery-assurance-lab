@@ -25,7 +25,7 @@ Set `TEST_DATABASE_URL` to a dedicated PostgreSQL 17 database to execute every b
 
 ## Evidence integrity
 
-The verification workflow generates the `synthetic-review-evidence` artifact with six JSON receipts using a disposable PostgreSQL 17 schema. The exported source revision is the workflow's exact checkout. The receipt generator uses the API write paths and confirmation worker state transitions, then exports via the same read routes used by the browser.
+The verification workflow generates the `synthetic-review-evidence` artifact with six JSON receipts using a disposable PostgreSQL 17 schema. The exported source revision is the workflow's exact checkout. The receipt generator uses the API write paths and confirmation worker state transitions, then exports via the same read routes used by the browser. The generated ATS receipts add a separately labeled in-process HTTP test trace with the observed status and request ID for each step. Those observations are test evidence and are distinct from the database snapshot.
 
 For a disposable checkout with dependencies installed, run `node scripts/export-review-evidence.ts test-results/review-evidence` against a fresh output directory. Set `TEST_DATABASE_URL` to use native PostgreSQL with an isolated schema, and optionally set `LAB_SOURCE_REVISION` to a verified full SHA. With no test URL the script uses an embedded database. UUIDs and server timestamps vary across runs. Recomputable fixture counts, scoring inputs, quantities and conclusions are stable.
 
