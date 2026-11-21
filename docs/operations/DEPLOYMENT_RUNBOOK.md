@@ -34,7 +34,7 @@ Set the image source to a verified release. Configure the start and pre-deploy c
 
 ## Release and recovery
 
-1. Create a dedicated staging project, a persistent PostgreSQL 17 service, and the two application services. Configure private database references, health checks and protected browser access before deployment. Verify branch CI.
+1. Reuse the [existing Railway project](https://railway.com/project/8317c467-7b5b-4067-887a-00798a6f312b). Verify available provisioning capacity and inspect the [current staging record](../testing/STAGING_VERIFICATION.md). Reconcile the pending Vite and standalone backend drafts with the worker and combined web/API configuration in this runbook. Provision one PostgreSQL 17 service with persistent storage and private networking. Verify CI for the exact Git revision used by both application services. Review the revised patch and configure private database references, health checks and protected browser access before applying it.
 2. Deploy the API image. Its pre-deploy command loads all checked-in migrations in version order, obtains a PostgreSQL advisory lock and writes checksums in the same transaction. Failure aborts the release. The readiness check verifies every expected checksum.
 3. Seed only staging once via a command in the connected API container. Run `node backend/dist/backend/src/db/seed.js`. This inserts deterministic seed rows, can be repeated, and preserves existing records. Production mode rejects the seed command.
 4. Deploy the worker from the same image revision. Check its current heartbeat through the protected API. Run the smoke script and protected browser suite described in [staging verification](../testing/STAGING_VERIFICATION.md).

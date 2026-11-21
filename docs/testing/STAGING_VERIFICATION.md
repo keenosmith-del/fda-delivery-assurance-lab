@@ -2,9 +2,23 @@
 
 ## Provider status
 
-On 21 November 2026, Railway CLI authenticated and listed accessible projects. Creation of a dedicated staging project returned `Free plan resource provision limit exceeded. Please upgrade to provision more resources!` No staging project was created and no existing project was repurposed. Capacity in an authorised workspace is required for the API, worker and managed PostgreSQL services. Hosted smoke, staging browser acceptance, restart checks on Railway and a staging URL are pending.
+On 21 November 2026, the existing [Railway project](https://railway.com/project/8317c467-7b5b-4067-887a-00798a6f312b) (`delightful-learning`) was inspected in its `production` environment (`1ddfec7a-4ce9-421e-83c6-884d40654750`). This is the target for the lab's staging mode. The environment had 14 unapplied configuration changes in patch `ed94d087-cb3a-47dc-b24c-d4b54242bac3`, two service drafts and no deployed services or volumes.
+
+| Required service | Provider state |
+| --- | --- |
+| Combined frontend and Fastify API | Undeployed. Existing draft `b1b7be84-61c2-4091-994f-ccc5f3601753` runs the backend as a separate workspace. |
+| Confirmation worker | Undeployed. Existing draft `5a8bec92-3cf5-4d2f-905b-989501a8f063` runs the Vite development server and is a candidate for repurposing. |
+| Private PostgreSQL 17 | Provisioning rejected. No service, volume or proxy created. |
+
+Railway rejected creation of an additional staged service, including an empty service, with `INVALID_ARGUMENT` and the message `Free plan resource provision limit exceeded. Please upgrade to provision more resources!` The patch remained staged after the requests. Neither app draft was applied. No staging URL, deployment IDs, migrations, seed, worker heartbeat, hosted test output or hosted restart evidence exists.
+
+Railway CLI reported $0.6074 in current workspace usage and no workspace-configured usage limit. The remainder of the $5 trial grant was approximately $4.39, consistent with the most recent dashboard reading of 20 days or $4.39 left. Trial credit and permission to provision a new resource are separate.
+
+The authorised architecture requires capacity for all three services in this project. The [candidate source branch](https://github.com/keenosmith-del/fda-delivery-assurance-lab/tree/codex/railway-staging-0a7f294) points to `0a7f294d62bdfcbf4e2f818ca160b4a4da2a9632`. Once capacity is available, repurpose the two drafts and provision PostgreSQL as described in the [deployment runbook](../operations/DEPLOYMENT_RUNBOOK.md).
 
 ## Verified release checks
+
+[GitHub Actions run 44933344304](https://github.com/keenosmith-del/fda-delivery-assurance-lab/actions/runs/44933344304) passed for the exact staging candidate `0a7f294d62bdfcbf4e2f818ca160b4a4da2a9632`. It ran the GitHub CI workflow with disposable infrastructure.
 
 [GitHub Actions run 44926893880](https://github.com/keenosmith-del/fda-delivery-assurance-lab/actions/runs/44926893880) passed on 21 November 2026 for `3a9d837de8b352d1f37e86bf647d89491640a5db`. It verified 33 backend tests with PostgreSQL 17, seven baseline Chromium cases, two private-origin cases, the container build and a successful backup and restore with matching version and fixture counts.
 
