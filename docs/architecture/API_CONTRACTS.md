@@ -48,3 +48,7 @@ Invalid identifiers or request bodies return 400. Missing resources return 404. 
 | `GET /api/outcomes/:id/export` | Downloads the same comparison as labelled synthetic evidence JSON, with the period selector supported. |
 
 Adoption writes use the existing write token when configured. Diagnosis evidence must exist for the selected automation and period. Follow-up windows must start on or after the actual implementation date and contain observations. Outcome windows must be ordered and non-overlapping. Source metadata and inputs are exposed alongside estimates and verified synthetic differences.
+
+## Hosted trust boundary
+
+Hosted mode authenticates all application reads, including assets and exports, and requires an operator or authorised demo role with the matching Origin on writes. Only health and readiness probes are public. `GET /api/ops/status` returns aggregate queue, worker heartbeat and in-process HTTP status counts to operators. It does not return operation records. A 429 response includes Retry-After.

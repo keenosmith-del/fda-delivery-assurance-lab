@@ -1,13 +1,21 @@
+import { access } from 'node:fs/promises';
+import { join } from 'node:path';
+import { loadMigrations, migrationsReady } from './db/migrations.ts';
 import { createApp } from './api/app.ts';
 import { readConfig } from './config/env.ts';
 import { database } from './db/pool.ts';
 
 const config = readConfig();
-const pool = database(config.DATABASE_URL);
+if (config.hosted) await access(join(config.LAB_UI_DIR, 'index.html'));
+const migrations = await loadMigrations(config.MIGRATIONS_DIR);
+const pool = database(config.DATABASE_URL, config.databaseOptions);
 const app = createApp({
   pool,
   writeToken: config.LAB_WRITE_TOKEN,
-  enableFaults: config.LAB_ENABLE_FAULTS === 'true',
+  enableFaults: config.enableFaults,
+  access: config.access,
+  uiDir: config.hosted ? config.LAB_UI_DIR : undefined,
+  checkSchema: () => migrationsReady(pool, migrations),
   logger: true,
 });
 

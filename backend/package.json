@@ -5,8 +5,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
-    "start": "node --env-file-if-exists=../.env dist/backend/src/server.js",
-    "worker": "node --env-file-if-exists=../.env dist/backend/src/workers/run.js"
+    "start": "cd .. && node --env-file-if-exists=.env backend/dist/backend/src/server.js",
+    "worker": "cd .. && node --env-file-if-exists=.env backend/dist/backend/src/workers/run.js"
   },
   "dependencies": {
     "fastify": "5.12.7",

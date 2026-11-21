@@ -44,3 +44,7 @@ Classification uses observable ordered similarity, frequency, sequence repetitio
 Agent Health determines reporting from heartbeat recency at the fixed window end and determines evidence freshness from last successful observation. Permission history is separate. Missing intervals aggregate adjacent one-hour slots without successful observation. Counts cover enrolled endpoints in a synthetic sample.
 
 The workspace registers Adoption Diagnostics and Outcome Verification as separate routes. Both read the same PostgreSQL period measurements and use shared Zod contracts. The adoption service writes diagnoses and intervention changes with audit entries in a single transaction. The outcome service calculates estimates and reviewed results from persisted inputs. It exports the compared period data, sources and results as JSON.
+
+## Hosted operation
+
+The deployment image packages the compiled frontend and API on one protected HTTPS origin. The independently managed worker shares a private PostgreSQL connection and reports heartbeat through migration 004. Queue and request health are available in the protected operator API. See the [deployment runbook](../operations/DEPLOYMENT_RUNBOOK.md) and [access policy](../operations/SECURITY_AND_ACCESS.md).
