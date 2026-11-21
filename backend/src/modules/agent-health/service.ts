@@ -1,5 +1,5 @@
 import type { DeviceDetail, DeviceHealth } from '../../../../shared/contracts/intelligence.ts';
-import type { Database } from '../../db/pool.ts';
+import type { SqlClient } from '../../db/pool.ts';
 
 const hour = 3_600_000;
 const freshnessLimit = 90 * 60_000;
@@ -35,12 +35,12 @@ export function measureDevice(device: Device, window: Window, history: Event[]):
   };
 }
 
-export async function queryDevices(pool: Database) {
+export async function queryDevices(pool: SqlClient) {
   const result = await pool.query<{ id: string; starts_at: Date; ends_at: Date }>(
     'SELECT * FROM lab_observation_windows ORDER BY ends_at DESC, id LIMIT 1',
   );
   const latest = result.rows[0];
-  if (!latest) return { window: null, reporting: 0, devices: [] as DeviceDetail[] };
+  if (!latest) return { windowId: null, window: null, reporting: 0, devices: [] as DeviceDetail[] };
   const window = { start: latest.starts_at.toISOString(), end: latest.ends_at.toISOString() };
 
   const [deviceRows, eventRows] = await Promise.all([
@@ -62,5 +62,5 @@ export async function queryDevices(pool: Database) {
   const devices = deviceRows.rows.map(({ enrolled_at, ...device }) => measureDevice(
     { ...device, enrolledAt: enrolled_at.toISOString() }, window, history.get(device.id) ?? [],
   ));
-  return { window, reporting: devices.filter(device => device.reporting).length, devices };
+  return { windowId: latest.id, window, reporting: devices.filter(device => device.reporting).length, devices };
 }

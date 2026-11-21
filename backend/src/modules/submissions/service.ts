@@ -4,6 +4,17 @@ import { operation } from '../../../../shared/contracts/submissions.ts';
 import type { Operation, Submission } from '../../../../shared/contracts/submissions.ts';
 import { transaction } from '../../db/pool.ts';
 
+import type { EvidenceActor } from '../../api/evidence.ts';
+
+type FaultReceipt = { requestId: string; fault: 'before-commit' | 'lost-ack'; actor: EvidenceActor };
+
+export async function recordFaultReceipt(client: SqlClient, id: string, receipt: FaultReceipt) {
+  await client.query(`
+    INSERT INTO lab_submission_fault_receipts (operation_id, request_id, fault, actor_role, source_revision)
+    VALUES ($1, $2, $3, $4, $5)
+  `, [id, receipt.requestId, receipt.fault, receipt.actor.role, receipt.actor.sourceRevision]);
+}
+
 type EventKind = Operation['events'][number]['kind'];
 export class BeforeCommitError extends Error {}
 
@@ -11,7 +22,7 @@ export async function audit(client: SqlClient, id: string, kind: EventKind) {
   await client.query('INSERT INTO submission_events (operation_id, kind) VALUES ($1, $2)', [id, kind]);
 }
 
-export async function submit(pool: Database, id: string, input: Submission, failBeforeCommit = false) {
+export async function submit(pool: Database, id: string, input: Submission, failBeforeCommit = false, receipt?: FaultReceipt) {
   const fingerprint = createHash('sha256').update(JSON.stringify([input.candidateCode, input.requisition])).digest('hex');
 
   return transaction(pool, async client => {
@@ -44,6 +55,7 @@ export async function submit(pool: Database, id: string, input: Submission, fail
     await client.query('INSERT INTO confirmation_jobs (operation_id) VALUES ($1)', [id]);
     await audit(client, id, duplicate ? 'duplicate_linked' : 'accepted');
     if (failBeforeCommit) throw new BeforeCommitError('Synthetic interruption before commit');
+    if (receipt?.fault === 'lost-ack') await recordFaultReceipt(client, id, receipt);
     return 'created';
   });
 }
@@ -65,4 +77,41 @@ export async function getOperation(pool: Database, id: string): Promise<Operatio
     WHERE o.id = $1
   `, [id]);
   return result.rowCount ? operation.parse(result.rows[0]) : null;
+}
+
+export async function getOperationEvidence(pool: Database, id: string) {
+  return transaction(pool, async client => {
+    const operations = await client.query(`
+      SELECT o.state, o.duplicate, o.created_at AS "createdAt", s.id AS "recordId", s.requisition,
+        s.created_at AS "recordCreatedAt", j.state AS "confirmationJobState", j.attempts AS "confirmationAttempts"
+      FROM submission_operations o JOIN submissions s ON s.id = o.submission_id
+      JOIN confirmation_jobs j ON j.operation_id = o.id WHERE o.id = $1
+    `, [id]);
+    const faults = await client.query(`
+      SELECT id::text, operation_id AS "operationId", request_id AS "requestId", fault,
+        actor_role AS "actorRole", source_revision AS "sourceRevision",
+        to_char(occurred_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS "occurredAt", 504 AS "plannedHttpStatus"
+      FROM lab_submission_fault_receipts WHERE operation_id = $1 ORDER BY id
+    `, [id]);
+    const operation = operations.rows[0] ?? null;
+    if (!operation && !faults.rowCount) return null;
+    const events = await client.query(`
+      SELECT id::text, operation_id AS "operationId", kind,
+        to_char(occurred_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS "occurredAt"
+      FROM submission_events WHERE operation_id = $1 ORDER BY id
+    `, [id]);
+    return {
+      operationId: id, operation, events: events.rows, faultDecisions: faults.rows,
+      units: { timestamp: 'ISO 8601 UTC', attempts: 'count', plannedHttpStatus: 'HTTP status code' },
+      provenance: {
+        sources: ['submission_operations', 'submissions', 'confirmation_jobs', 'submission_events', 'lab_submission_fault_receipts'],
+        ordering: 'Events and fault decisions are ordered by their own database event IDs.',
+        limitations: [
+          'Fault decisions record the API’s selected synthetic 504 response, not client receipt or polling.',
+          'A pre-commit fault decision can exist before retry creates a durable operation.',
+          'Legacy or fault-free operations may have no fault decisions. Confirmation is from the lab worker.',
+        ],
+      },
+    };
+  }, true);
 }

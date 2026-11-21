@@ -20,11 +20,11 @@ export function database(url: string, options: { max?: number; tls?: 'verify' | 
   });
 }
 
-export async function transaction<T>(pool: Database, work: (client: SqlClient) => Promise<T>): Promise<T> {
+export async function transaction<T>(pool: Database, work: (client: SqlClient) => Promise<T>, readOnly = false): Promise<T> {
   const client = await pool.connect();
   let rollbackError: Error | undefined;
   try {
-    await client.query('BEGIN');
+    await client.query(readOnly ? 'BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY' : 'BEGIN');
     const result = await work(client);
     await client.query('COMMIT');
     return result;

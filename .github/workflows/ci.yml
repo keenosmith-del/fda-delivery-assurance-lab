@@ -38,6 +38,16 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
       - run: npm run test:e2e:private
+      - name: Generate synthetic evidence
+        env:
+          LAB_SOURCE_REVISION: ${{ github.sha }}
+        run: node scripts/export-review-evidence.ts test-results/review-evidence
+      - name: Upload synthetic evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-review-evidence
+          path: test-results/review-evidence/
+          if-no-files-found: error
       - name: Verify disposable PostgreSQL backup and restore
         run: bash scripts/verify-backup-ci.sh "${{ job.services.postgres.id }}"
       - name: Build and check the deployment image
@@ -48,5 +58,5 @@ jobs:
             await import("./backend/dist/backend/src/api/app.js");
             await access("frontend/dist/index.html");
             await access("backend/dist/backend/src/workers/run.js");
-            await access("database/migrations/004_worker_operations.sql");
+            await access("database/migrations/005_evidence_provenance.sql");
           '

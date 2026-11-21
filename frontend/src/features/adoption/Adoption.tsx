@@ -59,6 +59,8 @@ function AdoptionWorkspace({ id }: { id: string }) {
   return <>
     <div className="panel coverage-summary">
       <h2>Usage and execution trends</h2>
+      <a className="secondary export-link" href={`${base}/export`} download>Download adoption evidence JSON</a>
+      <p>Follow-up measurements were seeded independently of intervention records. Compare coverage, reliability and workload before interpreting changes in adoption.</p>
       <div className="table-scroll"><table className="measurement-table">
         <thead><tr><th>Period</th><th>User adoption</th><th>Opportunity usage</th><th>Attempts</th><th>Successes</th><th>Failures</th><th>Exceptions</th></tr></thead>
         <tbody>{data.periods.map(item => <tr key={item.id}><th scope="row">{item.label}</th><td>{percent(item.adoption)}</td>
@@ -139,14 +141,16 @@ function AdoptionWorkspace({ id }: { id: string }) {
                 <label>Follow-up measurement period<select name="periodId" required>
                   {remaining.map(window => <option key={window.id} value={window.id}>{window.label}</option>)}
                 </select></label>
-                <label>Follow-up notes<textarea name="notes" required minLength={10} maxLength={500} rows={2} /></label>
+                <label>Follow-up notes<textarea name="notes" placeholder="Record trade-offs and possible alternative explanations." required minLength={10} maxLength={500} rows={2} /></label>
                 <button className="primary">Record follow-up</button>
               </form>}
               {recorded.map(entry => {
                 const after = data.periods.find(window => window.id === entry.periodId);
                 return <div key={entry.id}><strong>{after?.label} recorded</strong>
                   <p>Adoption {percent(before?.adoption ?? null)} → {percent(after?.adoption ?? null)}
-                    {' · '}Reliability {percent(before?.reliability ?? null)} → {percent(after?.reliability ?? null)}</p>
+                    {' · '}Reliability {percent(before?.reliability ?? null)} → {percent(after?.reliability ?? null)}
+                    {' · '}Coverage {percent(before?.coverage ?? null)} → {percent(after?.coverage ?? null)}</p>
+                  <p>This synthetic comparison does not establish a causal effect.</p>
                   <p>{entry.notes}</p></div>;
               })}
             </article>;
@@ -157,8 +161,8 @@ function AdoptionWorkspace({ id }: { id: string }) {
           <strong>{labels[item.category]}</strong><div>{item.evidence}</div><small>Recorded hypothesis · {item.hypothesis}</small>
         </li>)}</ul> : <p>No diagnoses recorded.</p>}
         <details><summary>Decision audit ({data.audit.length})</summary>
-          <ol className="history">{data.audit.map((item, index) => <li key={index}>{item.event.replaceAll('-', ' ')}
-            <small>{dateLabel(item.occurredAt)} · {item.subjectId}</small></li>)}</ol>
+          <ol className="history">{data.audit.map((item) => <li key={item.id}>{item.event.replaceAll('-', ' ')}
+            <small>{dateLabel(item.occurredAt)} · {item.subjectId} · {item.actorRole ?? 'Role unavailable'}</small></li>)}</ol>
         </details>
       </section>
     </div>

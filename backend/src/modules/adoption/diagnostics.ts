@@ -50,3 +50,25 @@ export function diagnosticSignals(periods: MeasurementPeriod[]) {
   }
   return signals;
 }
+
+export const adoptionCalculationVersion = 'adoption-comparison/v1';
+export const adoptionInterpretationLimits = [
+  'The follow-up measurements were seeded independently of the intervention record.',
+  'The comparison has no control group or counterfactual and cannot establish a causal effect.',
+  'Workload mix, operator mix, instrument coverage and execution conditions are alternative explanations.',
+];
+
+export function compareAdoption(before: MeasurementPeriod, after: MeasurementPeriod) {
+  const metric = (baseline: number | null, comparison: number | null) => ({
+    baseline, comparison, deltaPercentagePoints: baseline === null || comparison === null ? null : (comparison - baseline) * 100,
+  });
+  return {
+    baselinePeriodId: before.id,
+    comparisonPeriodId: after.id,
+    adoption: metric(before.adoption, after.adoption),
+    reliability: metric(before.reliability, after.reliability),
+    coverage: metric(before.coverage, after.coverage),
+    causality: 'not-established',
+    limitations: adoptionInterpretationLimits,
+  };
+}

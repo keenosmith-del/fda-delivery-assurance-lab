@@ -1,5 +1,14 @@
 import type { SuitabilityInputs, TaskDetail } from '../../../../shared/contracts/intelligence.ts';
 
+export const workflowScoringVersion = 'workflow-weighted-rubric/v1';
+
+export const workflowScoringMethod = 'Deterministic weighted engineering heuristics on a 0–100 scale. Scores are rubric points.';
+export const workflowScoringLimits = [
+  'Scores have no statistical calibration or demonstrated predictive accuracy.',
+  'Synthetic sample frequency and endpoint coverage influence the classification score.',
+  'Suitability includes assigned engineering inputs and counts the observed exception-free share.',
+];
+
 type Evidence = TaskDetail['evidence'];
 const percent = (fraction: number) => Math.round(100 * fraction);
 const cap = (count: number, full: number) => percent(Math.min(count / full, 1));

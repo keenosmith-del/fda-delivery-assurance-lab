@@ -1,6 +1,8 @@
 import { outcomeMeasurement } from '../../../../shared/contracts/measurement.ts';
 import type { MeasurementPeriod, OutcomeMeasurement } from '../../../../shared/contracts/measurement.ts';
 
+export const outcomeCalculationVersion = 'outcome-comparison/v1';
+
 export function weeklyOpportunity(volume: number, eligibilityBps: number) {
   if (!Number.isSafeInteger(volume) || volume < 0 || !Number.isSafeInteger(eligibilityBps) ||
       eligibilityBps < 0 || eligibilityBps > 10000 || !Number.isSafeInteger(volume * eligibilityBps)) {
@@ -34,8 +36,20 @@ export function calculateOutcome(baseline: Window, comparison: Window) {
   }
   const verifiedSeconds = !verificationLimits.length && a && b ? a.humanHandlingSeconds - b.humanHandlingSeconds : null;
 
+  const observedEligibility = (period: MeasurementPeriod) => period.observed
+    ? period.eligibleOpportunities / period.observed : null;
+
   return { modeledWeeklyOccurrences,
     adoptionAdjustedOpportunity: after.adoption === null ? null : Math.round(modeledWeeklyOccurrences * after.adoption * 100) / 100,
     grossEstimatedSeconds, netEstimatedSeconds, reworkSeconds: after.reworkSeconds, humanReviewSeconds: after.reviewSeconds,
-    baselineMeasurement: a, comparisonMeasurement: b, verifiedSeconds, verificationLimits };
+    baselineMeasurement: a, comparisonMeasurement: b, verifiedSeconds, verificationLimits,
+    reconciliation: {
+      baselineObservedEligibility: observedEligibility(before),
+      comparisonObservedEligibility: observedEligibility(after),
+      modeledMinusReviewedSeconds: verifiedSeconds === null ? null : netEstimatedSeconds - verifiedSeconds,
+      modeledScope: 'Comparison successes × baseline manual seconds per item, less comparison rework and human review.',
+      reviewedScope: 'Baseline minus comparison total human handling across matched volumes, including review and rework.',
+      limitation: 'The estimate credits successful executions. The time study measures whole-window human handling, including remaining work. Aggregate fixture inputs cannot allocate the gap to individual causes.',
+    },
+  };
 }
