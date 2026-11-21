@@ -20,6 +20,8 @@ The verification workflow runs native PostgreSQL tests and the normal and privat
 
 The development checkout passed type checks, the build, and 34 embedded database tests. Five native-only cases required the CI PostgreSQL 17 service. Local Chromium launch failed at the macOS Mach port restriction in both browser suites, before any browser assertions ran. GitHub's Linux runner is the browser acceptance environment for this iteration.
 
+The first hosted run reached backup and restore after both Chromium suites passed. The backup script still expected exactly four migrations. It now compares the source and restored migration manifests against the checked-in checksums, and checks that fixture counts and review provenance survive restore.
+
 ## Limits and next gate
 
 The evidence supports synthetic test-environment claims. The time study does not provide human reviewer identity or per-item timings. An environment that does not supply an exact build revision exports a null revision. Railway provisioning remains deferred pending existing-project capacity. Live acceptance still requires private PostgreSQL 17, combined web/API, an independent worker, and hosted smoke, browser and restart checks.
