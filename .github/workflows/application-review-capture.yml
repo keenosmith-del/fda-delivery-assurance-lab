@@ -41,7 +41,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - run: sudo apt-get install -y ffmpeg xdotool xvfb
+      - run: sudo apt-get install -y ffmpeg xdotool xvfb openbox
       - run: npm run build
       - run: npm run db:migrate && npm run db:seed
       - name: Record continuous application walkthrough
@@ -63,7 +63,11 @@ jobs:
           done
           curl -fsS http://127.0.0.1:5179/api/ready | jq -e '.status == "ready"'
           curl -fsS http://127.0.0.1:5179/api/ops/status | jq -e '.worker.state == "running"'
-          xvfb-run -a -s '-screen 0 1920x1080x24' node scripts/review-capture.mjs
+          xvfb-run -a -s '-screen 0 1920x1080x24' bash -c '
+            openbox > /dev/null 2>&1 &
+            sleep 1
+            exec node scripts/review-capture.mjs
+          '
       - name: Verify media and package
         run: |
           python3 - <<'PY'

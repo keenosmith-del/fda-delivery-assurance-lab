@@ -10,7 +10,7 @@ const screenshots = join(output, 'screenshots');
 const baseURL = 'http://127.0.0.1:5179';
 await mkdir(screenshots, { recursive: true });
 const browser = await chromium.launch({ headless: false,
-  args: ['--kiosk', '--window-position=0,0', '--no-first-run'] });
+  args: ['--kiosk', '--window-position=0,0', '--window-size=1920,1080', '--no-first-run'] });
 const context = await browser.newContext({ viewport: null, acceptDownloads: true });
 const page = await context.newPage();
 const pageErrors = [];
@@ -91,8 +91,12 @@ const overview = async () => {
 try {
   await page.goto(baseURL);
   await overview();
-  const viewport = await page.evaluate(() => [innerWidth, innerHeight, devicePixelRatio]);
-  expect(viewport).toEqual([1920, 1080, 1]);
+  const cdp = await context.newCDPSession(page);
+  const { windowId } = await cdp.send('Browser.getWindowForTarget');
+  await cdp.send('Browser.setWindowBounds', { windowId, bounds: { windowState: 'fullscreen' } });
+  await expect.poll(() => page.evaluate(() => [innerWidth, innerHeight, devicePixelRatio]), { timeout: 8000 })
+    .toEqual([1920, 1080, 1]);
+  await cdp.detach();
   expect((await (await page.request.get(baseURL + '/api/ready')).json()).status).toBe('ready');
   expect((await (await page.request.get(baseURL + '/api/ops/status')).json()).worker.state).toBe('running');
 
@@ -325,6 +329,7 @@ try {
     '- Data: synthetic intelligence and measurement seeds plus synthetic candidates, offer review, adoption diagnosis, intervention and follow-up entered during the walkthrough.',
     '- Interpretation: 339.64 is a modeled weekly occurrence figure. Timing studies, adoption rates and operations are synthetic. This recording shows a CI environment and does not establish a live hosted deployment.',
     '- Export: the selected incomplete pipeline-digest comparison downloaded from the UI and is included as JSON. Chromium can complete this direct download without opening another view.',
+    '- Capture setup: the first launch opened a smaller window and was rejected before recording. An X11 window manager and explicit fullscreen bounds resolved it.',
     '- Incomplete demonstrations: none. Application errors: none outside the intentional ATS 504 responses.',
     '', '## Recording timestamps', '',
     ...chapters.map(({ title, label }) => `- ${label} · ${title}`), '',
