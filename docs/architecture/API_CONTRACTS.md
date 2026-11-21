@@ -31,3 +31,20 @@ With `LAB_ENABLE_FAULTS=true`, set `X-Lab-Fault` to `before-commit` or `lost-ack
 | `POST /api/lab/submission-comparison` | Runs the isolated duplicate reference and the SQL-backed safe path. Requires authorised fault mode and a write token when configured. |
 
 Invalid identifiers or request bodies return 400. Missing resources return 404. A comparison requested outside fault mode also returns 404. All reads are currently available to clients of the API. The deployment design must define stronger access protection and request budgets before accepting non-demo workloads.
+
+## Adoption and outcome measurement
+
+| Request | Behaviour |
+| --- | --- |
+| `GET /api/automations` | Lists automation definitions with their workflow candidate IDs. |
+| `GET /api/automations/:id/periods` | Lists ordered windows and their persisted-input aggregates. |
+| `GET /api/adoption/:id` | Returns population, aggregate rates, observations, hypotheses, decisions, interventions and audit. |
+| `POST /api/adoption/:id/diagnoses` | Links an existing evidence signal (`periodId` and `category`) to a recorded `hypothesis`. |
+| `POST /api/adoption/:id/interventions` | Persists `findingId`, `action`, `owner` and `followUpOn`. |
+| `POST /api/adoption/:id/interventions/:interventionId/implement` | Records `implementedOn` and creates one audit event. Repeating that date is safe. |
+| `POST /api/adoption/:id/interventions/:interventionId/follow-ups` | Records a later observed `periodId` and `notes` for an implemented intervention. Duplicate period reviews return 409. |
+| `GET /api/outcomes/model` | Returns modeled baseline volume, eligibility basis points and weekly occurrences for each automation and the total. |
+| `GET /api/outcomes/:id` | Returns the calculation and evidence for a comparable pair, optionally selected with `?baseline=…&comparison=…`. |
+| `GET /api/outcomes/:id/export` | Downloads the same comparison as labelled synthetic evidence JSON, with the period selector supported. |
+
+Adoption writes use the existing write token when configured. Diagnosis evidence must exist for the selected automation and period. Follow-up windows must start on or after the actual implementation date and contain observations. Outcome windows must be ordered and non-overlapping. Source metadata and inputs are exposed alongside estimates and verified synthetic differences.

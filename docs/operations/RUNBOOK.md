@@ -69,3 +69,12 @@ HAVING count(*) > 1;
 ```
 
 Applied migrations are checksum-verified. Preserve their contents and create a new migration for schema changes. Stop API and worker before a local data reset. Use a separate, disposable database for tests. Hosted restart, release rollback and backup recovery procedures will be added alongside a verified deployment.
+
+### Adoption and outcome review
+
+1. Run the versioned migrations and seed the synthetic data. The seed can be rerun without discarding workflow or adoption decisions.
+2. Under **Adoption Diagnostics**, select **Pipeline digest assistant** and the baseline week. Inspect the population, 50% adoption and the observed signals. Record a hypothesis linked to **Low adoption**.
+3. Plan an owned action with a follow-up date of 16 November 2026. Record implementation on 9 November 2026 to compare the following synthetic window. Record the follow-up and inspect the 50% to 75% adoption comparison and the decision audit.
+4. Under **Outcome Verification**, inspect the baseline terms that yield 339.64 modeled weekly occurrences. Compare the complete candidate intake time study with the incomplete pipeline digest fixture, then download the selected comparison as JSON.
+
+The normal app runs against native PostgreSQL. The internal browser verification server uses a disposable fixture and is suitable for loopback-only synthetic review. Never put credentials or real operator data into these fixtures. Before public deployment, configure authenticated operational writes, review read access and retention, install request limits, and disable lab fault injection outside the approved demonstration environment.

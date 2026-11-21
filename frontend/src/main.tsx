@@ -3,6 +3,8 @@ import { createRoot } from 'react-dom/client';
 import { Reliability } from './features/ats-reliability/Reliability.tsx';
 import { Discover } from './features/workflow-evidence/Discover.tsx';
 import { AgentHealth } from './features/agent-health/AgentHealth.tsx';
+import { Adoption } from './features/adoption/Adoption.tsx';
+import { Outcomes } from './features/outcomes/Outcomes.tsx';
 import './styles/app.css';
 
 const routes = [
@@ -10,6 +12,8 @@ const routes = [
   { id: 'discover', label: 'Discover', view: Discover },
   { id: 'ats-reliability', label: 'ATS Reliability', view: Reliability },
   { id: 'agent-health', label: 'Agent Health', view: AgentHealth },
+  { id: 'adoption', label: 'Adoption Diagnostics', view: Adoption },
+  { id: 'outcomes', label: 'Outcome Verification', view: Outcomes },
 ] as const;
 
 function Overview() {
@@ -17,6 +21,8 @@ function Overview() {
     'Inspect observed task sequences, scoring factors and review decisions.',
     'Trace submissions through commitment, acknowledgment loss and safe recovery.',
     'Inspect synthetic endpoint history, permissions and observation gaps.',
+    'Diagnose usage barriers, record interventions and compare follow-up measurements.',
+    'Inspect opportunity models, execution costs and the evidence for measured outcomes.',
   ];
   return <>
     <section className="heading"><h1>Delivery Assurance</h1>

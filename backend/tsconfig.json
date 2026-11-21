@@ -1,5 +1,5 @@
 {
   "extends": "../tsconfig.base.json",
-  "compilerOptions": { "module": "NodeNext", "noEmit": true },
+  "compilerOptions": { "module": "NodeNext", "noEmit": true, "erasableSyntaxOnly": true },
   "include": ["src", "tests", "../shared/contracts"]
 }

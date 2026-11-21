@@ -15,7 +15,7 @@ The goal is **not to recreate or replace Attain**. It is to develop and demonstr
 
 ## Current implementation
 
-The workspace includes the ATS reliability runner and lost-acknowledgment comparison, Workflow Evidence with persisted review history, and Agent Health with independently tracked reporting, permissions and evidence freshness. PostgreSQL stores the synthetic fixtures, submission operations, audit events, and review history. A separate worker confirms ATS operations.
+The workspace includes the ATS reliability runner and lost-acknowledgment comparison, Workflow Evidence with persisted review history, Agent Health with independently tracked reporting, permissions and evidence freshness, and two measurement workspaces. Adoption Diagnostics stores evidence-backed findings, owned interventions, implementation dates and follow-up decisions. Outcome Verification separates observed work, modeled opportunity, estimated savings and reviewed synthetic time studies. PostgreSQL stores the synthetic fixtures, submission operations, audit events, and review history. A separate worker confirms ATS operations.
 
 Use Node.js 24 and Docker Compose. From the project root:
 
@@ -34,6 +34,8 @@ In separate terminals, run `npm run dev`, `npm run dev:worker` and `npm run dev:
 - **Ambiguous submission:** Compare an isolated unsafe retry with PostgreSQL-backed idempotent replay and business-key deduplication.
 - **Workflow review:** Filter synthetic task candidates, inspect supporting evidence and save independent classification and automation suitability decisions.
 - **Incomplete observation:** Inspect why a reporting workstation can still have stale observations and limited permissions.
+- **Adoption intervention:** Investigate the pipeline digest, document an onboarding hypothesis, and record an owned intervention with a follow-up.
+- **Outcome evidence:** Compare complete and incomplete measurement windows and export their calculation inputs, assumptions and results.
 
 ## Evidence and boundaries
 
@@ -53,7 +55,7 @@ All application records, candidate data, activity events, failures, and benchmar
 
 ## Status
 
-Type checking, builds and embedded PostgreSQL tests pass. Native multi-connection and process-recovery verification, browser verification and visual review are pending for these changes. Adoption Diagnostics and Outcome Verification are subsequent workstreams.
+See the [verification matrix](docs/testing/VERIFICATION.md) for the local checks, PostgreSQL 17 and Chromium CI runs, and deployment requirements.
 
 ---
 
