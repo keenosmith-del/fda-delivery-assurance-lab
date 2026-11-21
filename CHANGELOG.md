@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Corrected Vite startup and browser selectors. Verified the existing release with PostgreSQL 17 and Chromium.
+- Added Adoption Diagnostics with persisted cohorts, first-use events, diagnostic decisions, interventions and follow-ups.
+- Added Outcome Verification with modeled opportunities, net estimates, compared synthetic time studies and evidence JSON exports.
+- Added calculation, persistence and browser regression coverage.
+
+## Iterations 05–07
+
 - Pinned the CI runner to Ubuntu 24.04 for the locked Playwright version.
 - Added native PostgreSQL tests for conflicting concurrent requests, process termination and worker recovery, and database reconnection.
 - Added the controlled ATS comparison and its SQL-backed record counts.

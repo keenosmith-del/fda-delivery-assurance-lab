@@ -43,4 +43,4 @@ Classification uses observable ordered similarity, frequency, sequence repetitio
 
 Agent Health determines reporting from heartbeat recency at the fixed window end and determines evidence freshness from last successful observation. Permission history is separate. Missing intervals aggregate adjacent one-hour slots without successful observation. Counts cover enrolled endpoints in a synthetic sample.
 
-The frontend uses workspace route definitions for the implemented modules. Adoption Diagnostics and Outcome Verification can register new routes when their services and data are ready.
+The workspace registers Adoption Diagnostics and Outcome Verification as separate routes. Both read the same PostgreSQL period measurements and use shared Zod contracts. The adoption service writes diagnoses and intervention changes with audit entries in a single transaction. The outcome service calculates estimates and reviewed results from persisted inputs. It exports the compared period data, sources and results as JSON.

@@ -3,6 +3,7 @@ import Fastify, { LogController } from 'fastify';
 import type { Database } from '../db/pool.ts';
 import { comparison } from '../../../shared/contracts/intelligence.ts';
 import { compareSubmissions } from '../modules/submissions/comparison.ts';
+import { registerMeasurement } from './measurement.ts';
 import { registerIntelligence } from './intelligence.ts';
 import { fault, operationId, submission } from '../../../shared/contracts/submissions.ts';
 import { BeforeCommitError, getOperation, submit } from '../modules/submissions/service.ts';
@@ -98,5 +99,6 @@ export function createApp({ pool, writeToken, enableFaults, logger = false }: Op
   });
 
   registerIntelligence(app, pool, canWrite);
+  registerMeasurement(app, pool, canWrite);
   return app;
 }
