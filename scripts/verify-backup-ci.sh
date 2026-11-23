@@ -50,11 +50,17 @@ node --input-type=module -e '
 '
 DATABASE_URL="$database_url" node --input-type=module -e '
   import { database } from "./backend/src/db/pool.ts";
+  import { receiveObservation } from "./backend/src/modules/adoption/assurance.ts";
+  import { fixtureWindows } from "./scripts/adoption-fixture.ts";
+  import { fixtureScope } from "./scripts/fda-fixture.ts";
   import { exerciseDownstreamEvidence } from "./scripts/downstream-evidence-fixture.ts";
   const pool = database(process.env.DATABASE_URL);
   try {
     const { rows: [delivery] } = await pool.query("SELECT id FROM fda_workflow_delivery_cases");
-    await exerciseDownstreamEvidence(pool, delivery.id, "lost-acknowledgment");
+    const { operation } = await exerciseDownstreamEvidence(pool, delivery.id, "lost-acknowledgment");
+    const fixture = fixtureWindows({ caseId: delivery.id, workflowId: "workflow-003",
+      operationId: operation.id, verifiedAt: operation.updated_at.toISOString() });
+    for (const event of fixture.events("baseline")) await receiveObservation(pool, fixtureScope, event);
   } finally { await pool.end(); }
 '
 stop_fda_api
@@ -95,4 +101,14 @@ downstream_query="SELECT
 for database in fda_backup_source fda_backup_restore; do
   downstream="$(docker exec "$container" psql -At -U fda -d "$database" -c "$downstream_query")"
   [[ "$downstream" == '1|1|1|3' ]]
+done
+
+adoption_query="SELECT (SELECT count(*) FROM fda_adoption_assessments),
+  (SELECT count(*) FROM fda_adoption_observations WHERE body->>'kind'='attempt'),
+  (SELECT count(*) FROM fda_adoption_receipts WHERE status='accepted'),
+  (SELECT count(*) FROM fda_adoption_observations o JOIN fda_downstream_operations d
+    ON o.body->>'operationId'=d.id::text AND o.delivery_case_id=d.delivery_case_id AND d.state='succeeded')"
+for database in fda_backup_source fda_backup_restore; do
+  adoption="$(docker exec "$container" psql -At -U fda -d "$database" -c "$adoption_query")"
+  [[ "$adoption" == '1|1|16|1' ]]
 done

@@ -1,3 +1,5 @@
+import { ADOPTION_ASSURANCE, ADOPTION_OBSERVATIONS } from '../../shared/contracts/adoption-assurance.ts';
+import { fixtureWindows } from '../../scripts/adoption-fixture.ts';
 import { feasible, reviewedRisk } from '../support/workflow-review.ts';
 import { expect, test } from '@playwright/test';
 import { publishScenario } from '../../scripts/publish-fda.ts';
@@ -84,6 +86,7 @@ test('records an incident, verifies new reporting evidence and exports its audit
 });
 
 test('approves an imported workflow and exports its verified execution after a lost acknowledgment', async ({ page, request }) => {
+  test.setTimeout(60_000);
   const publish = (scenario: string) => publishScenario(async event => {
     const response = await request.post(FDA_EVENTS, {
       data: event, headers: { authorization: `Bearer ${browserSource.token}` },
@@ -163,6 +166,46 @@ test('approves an imported workflow and exports its verified execution after a l
   const executionExport = page.waitForEvent('download');
   await execution.getByRole('link', { name: 'Download downstream execution evidence' }).click();
   expect((await executionExport).suggestedFilename()).toMatch(/-downstream-assurance.json$/);
+  await execution.getByRole('link', { name: 'Open FDA-linked Adoption Diagnostics' }).click();
+  await expect(page.getByText('Adoption unknown. A declared cohort and usage observations are required.')).toBeVisible();
+  const caseId = new URL(page.url().replace('#adoption?', '?')).searchParams.get('case')!;
+  const state = await (await request.get(ADOPTION_ASSURANCE + '/cases/' + caseId)).json();
+  const fixture = fixtureWindows({ caseId, workflowId: state.workflowId, operationId: state.operation.id,
+    verifiedAt: state.operation.verifiedAt });
+  for (const event of fixture.events('baseline')) {
+    expect((await request.post(ADOPTION_OBSERVATIONS, { data: event, headers: { authorization: `Bearer ${browserSource.token}` } })).status()).toBe(201);
+  }
+  await page.getByRole('button', { name: 'Refresh adoption evidence' }).click();
+  await expect(page.getByRole('row').filter({ hasText: /User adoption.*25%/ })).toBeVisible();
+  await page.getByLabel('Engineering hypothesis').fill('Review the synthetic onboarding steps.');
+  await page.getByLabel('Unresolved questions').fill('Check permission evidence independently.');
+  await page.getByLabel('Proposed action').fill('Document the first permitted action.');
+  await page.getByLabel('Responsible role').fill('Delivery engineer');
+  await page.getByLabel('Diagnosis reason').fill('The declared cohort shows low observed adoption.');
+  await page.getByRole('button', { name: 'Record diagnosis' }).click();
+  await page.getByText('Diagnosis · low adoption', { exact: true }).click();
+  const planning = page.locator('form').filter({ has: page.getByRole('button', { name: 'Plan intervention' }) });
+  await planning.getByLabel('Intended improvement').fill('Clarify how to start the synthetic workflow.');
+  await planning.getByLabel('Responsible role').fill('Delivery engineer');
+  await planning.getByLabel('Follow-up period').fill('period-002');
+  await planning.getByLabel('Planning reason').fill('Review uptake during a separate measurement window.');
+  await planning.getByRole('button', { name: 'Plan intervention' }).click();
+  await page.getByLabel('Implemented on').fill(fixture.implementationDate.slice(0, 10));
+  await page.getByLabel('Transition reason').fill('The revised lab instructions were applied.');
+  await page.getByRole('button', { name: 'Record implementation' }).click();
+  for (const event of fixture.events('improvement')) {
+    expect((await request.post(ADOPTION_OBSERVATIONS, { data: event, headers: { authorization: `Bearer ${browserSource.token}` } })).status()).toBe(201);
+  }
+  await page.getByRole('button', { name: 'Refresh adoption evidence' }).click();
+  await expect(page.getByRole('row').filter({ hasText: /User adoption.*75%/ })).toBeVisible();
+  await page.getByLabel('Transition reason').fill('Reviewed the separately published follow-up.');
+  await page.getByRole('button', { name: 'Record follow-up' }).click();
+  await expect(page.getByText(/User adoption · 50.0 percentage points/)).toBeVisible();
+  await expect(page.getByText('Observed change cannot establish an intervention effect.')).toBeVisible();
+  const adoptionExport = page.waitForEvent('download');
+  await page.getByRole('link', { name: 'Download adoption evidence' }).click();
+  expect((await adoptionExport).suggestedFilename()).toMatch(/-adoption-assurance.json$/);
+  await page.getByRole('link', { name: 'Workflow Evidence and delivery case' }).click();
   await publish('workflow-evidence-change');
   await workflow.getByRole('button', { name: 'Refresh assessment' }).click();
   await expect(workflow.getByText(/Source evidence has changed since this revision/)).toBeVisible();

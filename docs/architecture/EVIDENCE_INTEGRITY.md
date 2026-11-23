@@ -63,3 +63,7 @@ An assessment revision freezes its canonical evidence, receipt links, readiness 
 ## Downstream execution evidence
 
 The execution record retains the exact approval revision and source fingerprint at authorisation. Exports show a dispatch response separately from the authoritative lookup, including the expected and observed effect fingerprints and verified effect ID. The same evidence preserves terminal and ambiguous outcomes. The export generator exercises a post-commit acknowledgment loss and a pre-commit failure followed by explicit redrive.
+
+## Delivery-linked usage evidence
+
+Adoption exports distinguish the authoritative operation, separately published synthetic activity, calculated metrics and operator-authored interpretations. They retain source event and receipt identities, numerator and denominator evidence, and the snapshots used for recorded follow-up comparisons. The same operation is counted at most once.

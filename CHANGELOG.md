@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Linked verified synthetic delivery cases to independently published adoption observations, interventions and follow-up comparisons.
+
 - Added scoped synthetic downstream execution, durable dispatch, worker lease recovery and independently reconciled effect evidence.
 
 - Added auditable assessments, engineering decisions and delivery cases for imported FDA workflows.

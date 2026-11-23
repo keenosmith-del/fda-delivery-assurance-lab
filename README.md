@@ -79,3 +79,5 @@ See [Evidence integrity](docs/architecture/EVIDENCE_INTEGRITY.md) for the scorin
 ### Agent operational assurance
 
 The imported Agent Health view evaluates readiness, identifies source evidence gaps and lets operators record and verify incident interventions. Workflow Evidence shows the affected endpoint cohort and uses coverage and incident state for its engineering review gate. See the [operational assurance walkthrough](docs/operations/RUNBOOK.md#agent-operational-assurance).
+
+FDA-linked Adoption Assurance is available from a delivery case or the Adoption Diagnostics workspace. It joins synthetic usage observations to the originating engineering approval and treats verified delivery, source-reported activity and adoption as separate measures.

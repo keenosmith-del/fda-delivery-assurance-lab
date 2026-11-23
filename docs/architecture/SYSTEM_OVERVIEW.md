@@ -69,3 +69,7 @@ Imported Workflow Evidence combines independent agent readiness with a human rev
 ## Downstream execution
 
 The local API authorises one synthetic execution per approved delivery case. Migration 009 stores the case identity, decision, revision, source fingerprint, operation and its dispatch intent together. A separate worker claims jobs from PostgreSQL. A separate HTTP simulator owns the authoritative effect store. The worker compares the key, operation ID and fingerprint of the returned effect before recording success.
+
+## Delivery adoption assurance
+
+Migration 010 adds scoped adoption assessments, usage observations, receipts and an append-only action history. Historical measurements remain linked to their original engineering decision and delivery case. The Adoption Diagnostics workspace exposes the FDA-linked dataset separately from the legacy fixtures.
