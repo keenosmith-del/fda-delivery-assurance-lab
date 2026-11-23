@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import type { FormEvent } from 'react';
 import { assessmentDetail, decisionOutcome, WORKFLOW_ASSESSMENTS } from '../../../../shared/contracts/workflow-assessments.ts';
 import type { AssessmentDetail } from '../../../../shared/contracts/workflow-assessments.ts';
@@ -30,6 +30,7 @@ export function WorkflowAssessment({ workflowId }: { workflowId: string }) {
   const [refresh, refreshWith] = useState(0);
   const [token, setToken] = useState('');
   const [choice, setChoice] = useState('defer');
+  const decisionId = useId();
 
   useEffect(() => {
     const controller = new AbortController();
@@ -114,9 +115,10 @@ export function WorkflowAssessment({ workflowId }: { workflowId: string }) {
         ...(choice === 'approve-supervised-pilot' ? { pilot: { operatingLimits: value(data, 'operatingLimits'),
           humanReview: value(data, 'humanReview'), stopCriteria: value(data, 'stopCriteria') } } : {}),
       }))}>
-        <label>Engineering decision<select value={choice} onChange={event => setChoice(event.target.value)}>
+        <label htmlFor={decisionId}>Engineering decision</label>
+        <select id={decisionId} value={choice} onChange={event => setChoice(event.target.value)}>
           {decisionOutcome.options.map(outcome => <option key={outcome} value={outcome}>{decisionLabels[outcome]}</option>)}
-        </select></label>
+        </select>
         <Note name="justification" label="Decision justification" />
         <Note name="conditions" label="Required conditions, one per line" required={false} />
         {choice === 'approve-supervised-pilot' && <>

@@ -137,7 +137,7 @@ test('assesses an imported candidate, approves planning, creates a delivery case
   }
   await workflow.getByLabel('Risk review basis').fill('Scope, reliability and the proposed mitigation were reviewed.');
   await workflow.getByRole('button', { name: 'Save risk review' }).click();
-  await expect(workflow.getByText(/Revision 3 · feasibility review/)).toBeVisible();
+  await expect(workflow.getByText('Revision 3 · feasibility review · Responsible role operator', { exact: true })).toBeVisible();
   await workflow.getByLabel('Reason for decision review').fill('Feasibility, risk and supporting source records were reviewed.');
   await workflow.getByRole('button', { name: 'Submit for decision' }).click();
   await workflow.getByLabel('Engineering decision', { exact: true }).selectOption('approve-implementation-planning');
@@ -167,7 +167,7 @@ test('allows deferral for blocked operational evidence without creating an incid
   await workflow.getByLabel('Engineering decision', { exact: true }).selectOption('approve-implementation-planning');
   await workflow.getByLabel('Decision justification').fill('Check whether the mandatory operational gate blocks this decision.');
   await workflow.getByRole('button', { name: 'Record engineering decision' }).click();
-  await expect(workflow.getByRole('alert')).toContainText('Source evidence is not ready');
+  await expect(workflow.getByRole('alert').filter({ hasText: 'Source evidence is not ready' })).toBeVisible();
   await workflow.getByLabel('Engineering decision', { exact: true }).selectOption('defer');
   await workflow.getByRole('button', { name: 'Record engineering decision' }).click();
   await expect(workflow.getByText(/Revision 2 · Defer ·/)).toBeVisible();
