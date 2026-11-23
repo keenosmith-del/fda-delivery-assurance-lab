@@ -32,7 +32,8 @@ test('traces the independent FDA import into the endpoint and workflow workspace
   await page.getByRole('link', { name: 'record-043 · processed' }).click();
   await page.getByRole('link', { name: 'Open imported Workflow Evidence' }).click();
   await expect(page.getByText(/Observation coverage is incomplete/)).toBeVisible();
-  await expect(page.getByText(/Delayed observation/)).toBeVisible();
+  const delayedObservation = page.locator('section.observation').filter({ has: page.getByText('observation-003', { exact: true }) });
+  await expect(delayedObservation.getByText(/Delayed observation/)).toBeVisible();
   await page.getByRole('link', { name: 'record-043', exact: true }).click();
   const details = page.locator('section').filter({ has: page.getByRole('heading', { name: 'Receipt details' }) });
   await expect(details.getByText('workflow.observation', { exact: true })).toBeVisible();
@@ -77,5 +78,6 @@ test('records an incident, verifies new reporting evidence and exports its audit
   await page.getByRole('link', { name: 'Download operational assurance JSON' }).click();
   expect((await download).suggestedFilename()).toMatch(/^agent-incident-.*\.json$/);
   await page.getByRole('link', { name: 'workflow-002', exact: true }).click();
-  await expect(page.getByText('Additional evidence required', { exact: true })).toBeVisible();
+  const workflow = page.locator('details').filter({ has: page.getByText('workflow-002 · record-sync', { exact: true }) });
+  await expect(workflow.getByText('Additional evidence required', { exact: true })).toBeVisible();
 });
