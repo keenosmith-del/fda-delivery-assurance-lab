@@ -156,8 +156,9 @@ test('approves an imported workflow and exports its verified execution after a l
   await execution.getByRole('button', { name: 'Start synthetic execution' }).click();
   await expect(execution.getByRole('status')).toHaveText('Execution state · succeeded');
   await execution.getByText('Dispatch and reconciliation evidence', { exact: true }).click();
-  await expect(execution.getByText(/ACKNOWLEDGMENT_UNAVAILABLE/)).toBeVisible();
-  await expect(execution.getByText(/authoritative-effect-lookup/)).toBeVisible();
+  const attemptEvidence = execution.locator('pre');
+  await expect(attemptEvidence.filter({ hasText: 'ACKNOWLEDGMENT_UNAVAILABLE' })).toBeVisible();
+  await expect(attemptEvidence.filter({ hasText: 'authoritative-effect-lookup' })).toBeVisible();
   await expect(execution.getByText('1 dispatches · 1 lookups', { exact: true })).toBeVisible();
   const executionExport = page.waitForEvent('download');
   await execution.getByRole('link', { name: 'Download downstream execution evidence' }).click();
