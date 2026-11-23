@@ -1,11 +1,16 @@
 import { z } from 'zod';
 
+import { sourceId, tenantId } from '../../../shared/contracts/fda-ingestion.ts';
+
 const password = z.string().min(32).max(128).regex(/^[!-~]+$/);
 const env = z.object({
   LAB_MODE: z.enum(['local', 'test', 'staging', 'production']).default('local'),
   DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
   HOST: z.string().min(1).optional(),
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
+  LAB_FDA_TENANT_ID: tenantId.default('tenant-001'),
+  LAB_FDA_SOURCE_ID: sourceId.default('source-001'),
+  LAB_FDA_SOURCE_TOKEN: z.string().regex(/^[A-Za-z0-9_-]{32,128}$/).optional(),
   LAB_WRITE_TOKEN: z.string().min(24).optional(),
   LAB_ENABLE_FAULTS: z.enum(['true', 'false']).default('false'),
   LAB_PUBLIC_ORIGIN: z.url({ protocol: /^https$/ }).optional(),
@@ -43,7 +48,12 @@ export function readConfig(role: 'api' | 'worker' | 'migration' | 'seed' = 'api'
     if (enableFaults && (!demo || demo === viewer || demo === operator)) throw new Error('Staging faults require a separate LAB_DEMO_PASSWORD.');
     access = { origin, viewer, operator, demo: enableFaults ? demo : undefined };
   }
-  return { ...config, HOST: host, hosted, access, enableFaults, databaseOptions: {
+  const sourceToken = config.LAB_FDA_SOURCE_TOKEN;
+  if (sourceToken && [config.LAB_WRITE_TOKEN, config.LAB_VIEWER_PASSWORD, config.LAB_OPERATOR_PASSWORD, config.LAB_DEMO_PASSWORD].includes(sourceToken)) {
+    throw new Error('FDA source token must be distinct from workspace credentials.');
+  }
+  const fdaSource = { tenantId: config.LAB_FDA_TENANT_ID, sourceId: config.LAB_FDA_SOURCE_ID, token: sourceToken };
+  return { ...config, fdaSource, HOST: host, hosted, access, enableFaults, databaseOptions: {
     max: config.LAB_DB_POOL_MAX ?? (role === 'api' ? 8 : 2), tls: config.LAB_DATABASE_TLS,
     statementTimeoutMs: role === 'migration' ? 45_000 : 8_000,
   } };

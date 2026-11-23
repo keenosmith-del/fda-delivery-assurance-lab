@@ -9,9 +9,11 @@ import { seedMeasurement } from '../../database/seeds/measurement.ts';
 import { openTestDatabase } from './database.ts';
 import { privateFixture } from './private-fixture.ts';
 
+import { browserSource } from './fda-fixture.ts';
+
 const database = await openTestDatabase();
 const expected = await loadMigrations('database/migrations');
-const app = createApp({ pool: database.pool, access: privateFixture, uiDir: 'frontend/dist',
+const app = createApp({ pool: database.pool, fdaSource: browserSource, access: privateFixture, uiDir: 'frontend/dist',
   checkSchema: () => migrationsReady(database.pool, expected) });
 const stop = new AbortController();
 for (const signal of ['SIGINT', 'SIGTERM'] as const) process.once(signal, () => stop.abort());

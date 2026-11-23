@@ -5,8 +5,10 @@ import { openTestDatabase } from './database.ts';
 import { seedIntelligence } from '../../database/seeds/intelligence.ts';
 import { seedMeasurement } from '../../database/seeds/measurement.ts';
 
+import { browserSource } from './fda-fixture.ts';
+
 const database = await openTestDatabase();
-const app = createApp({ pool: database.pool, enableFaults: true });
+const app = createApp({ pool: database.pool, enableFaults: true, fdaSource: browserSource });
 const stop = new AbortController();
 for (const signal of ['SIGINT', 'SIGTERM'] as const) process.once(signal, () => stop.abort());
 

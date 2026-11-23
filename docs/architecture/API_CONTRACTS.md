@@ -63,3 +63,18 @@ Each JSON attachment includes `schemaVersion: fda-evidence/v1`, `evidenceType`, 
 ## Hosted trust boundary
 
 Hosted mode authenticates all application reads, including assets and exports, and requires an operator or authorised demo role with the matching Origin on writes. Only health and readiness probes are public. `GET /api/ops/status` returns aggregate queue, worker heartbeat and in-process HTTP status counts to operators. It does not return operation records. A 429 response includes Retry-After.
+
+## Simulated FDA integration
+
+The lab owns `fda-lab.ingestion/v1`. The shared schemas live in `shared/contracts/fda-ingestion.ts`. The strictly validated envelope contains schema version, tenant, source, stable source record ID, source occurrence time, record type and typed payload. Source revision and batch correlation ID are optional. Each request is one event, with a maximum body size of 8 KiB. The publisher sends a batch as individual requests, keeping an independent result for each event.
+
+| Route | Access and result |
+| --- | --- |
+| `POST /api/integrations/fda/v1/events` | Source Bearer credential with one configured tenant and source. Returns a receipt with `201` for a processed event, `200` for identical replay, `400` for invalid content, `403` for a scope mismatch, `409` for a content conflict and `503` for projection failure. Missing or invalid credentials return `401`, oversized bodies `413`, and request budget exhaustion `429`. Source writes from browser origins return `403`. |
+| `GET /api/integrations/fda/v1/status` | Workspace access. Returns persisted receipt counts, canonical acceptance count, configured source identity, last successful ingest and 40 recent receipts. |
+| `GET /api/integrations/fda/v1/receipts/:id` | Workspace access. Returns a scoped receipt, or `404` for an unknown or out-of-scope ID. |
+| `GET /api/integrations/fda/v1/records` | Workspace access. Returns the latest 500 canonical records for the configured scope, including each processed receipt ID. Payloads use the strict, minimized versioned schema. |
+| `GET /api/integrations/fda/v1/agent-health` | Workspace access. Returns the latest source assessment window, endpoint reporting and evidence freshness, permission states, observation intervals and receipt links. |
+| `GET /api/integrations/fda/v1/workflow-evidence` | Workspace access. Returns candidates, linked windows, validated observations, evidence gaps and supporting receipts. |
+
+Workspace reads use the existing hosted Basic credentials or loopback-only local access. Source Bearer credentials grant writes only. The source route permits up to 240 authenticated and 30 unauthenticated requests per minute per API process. Endpoints are registered independently of legacy fixture routes. Time semantics and restart handling are in [Iteration 15](../iterations/ITERATION_15_FDA_INTEGRATION_GATEWAY.md).

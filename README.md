@@ -2,7 +2,7 @@
 
 **An independent forward-deployed engineering assessment of workflow discovery, operational reliability, and measurable automation outcomes.**
 
-This project explores how an observed operational bottleneck can move through engineering investigation, implementation, verification, and measurable business impact. It is informed by the publicly documented Attain FDA workflow, a supplied product walkthrough, and a published HIREXE internal workflow study.
+This project explores how an observed operational bottleneck can move through engineering investigation, implementation, verification, and measurable business impact. It is informed by the publicly documented attain FDA workflow, a supplied product walkthrough, and a published HIREXE internal workflow study.
 
 The goal is **not to recreate or replace Attain**. It is to develop and demonstrate complementary engineering capabilities, using an independently implemented system and synthetic test data.
 
@@ -28,6 +28,10 @@ npm run db:seed
 ```
 
 In separate terminals, run `npm run dev`, `npm run dev:worker` and `npm run dev:frontend`. Vite prints the browser URL.
+
+## Simulated FDA integration
+
+An independent publisher sends versioned, minimized synthetic records over HTTP. After configuring the source token in the [runbook](docs/operations/RUNBOOK.md#simulated-fda-import), run `npm run fda:publish`. Open **FDA Integration** to inspect persisted source receipts and to trace endpoint and workflow data into **Agent Health** and **Workflow Evidence**. The gateway and publisher implement a hypothetical, lab-owned contract.
 
 ## Demonstration scenarios
 

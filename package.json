@@ -19,6 +19,7 @@
     "db:migrate": "node --env-file-if-exists=.env backend/src/db/migrate.ts",
     "test": "vitest run backend/tests",
     "test:e2e": "playwright test",
+    "fda:publish": "node --env-file-if-exists=.env scripts/publish-fda.ts",
     "db:seed": "node --env-file-if-exists=.env backend/src/db/seed.ts",
     "test:e2e:private": "playwright test --config playwright.private.config.ts"
   },

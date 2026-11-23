@@ -1,6 +1,8 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 
+import { FDA_EVENTS } from '../../../shared/contracts/fda-ingestion.ts';
+
 type Role = 'viewer' | 'operator' | 'demo';
 export interface HostedAccess {
   origin: string;
@@ -55,6 +57,8 @@ export function installSecurity(app: FastifyInstance, access?: HostedAccess) {
 
   if (access) app.addHook('onRequest', async (request, reply) => {
     const pathname = request.url.split('?', 1)[0];
+    // The exact POST has its own mandatory credential gate before body parsing.
+    if (request.method === 'POST' && request.routeOptions.url === FDA_EVENTS) return;
     const isRead = safeMethods.has(request.method);
     if (isRead && probes.has(pathname)) return;
     const token = request.headers.authorization;
