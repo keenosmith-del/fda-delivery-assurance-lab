@@ -60,6 +60,11 @@ jobs:
             await access("database/migrations/009_downstream_operations.sql");
             await access("database/migrations/010_adoption_assurance.sql");
             await access("database/migrations/011_outcome_assurance.sql");
+            await access("database/migrations/012_ai_investigations.sql");
+            await import("./backend/dist/backend/src/api/investigations.js");
+            await import("./backend/dist/backend/src/modules/investigations/provider.js");
+            await access("backend/dist/backend/src/modules/investigations/service.js");
+            await access("backend/dist/shared/contracts/investigations.js");
             await import("./backend/dist/backend/src/api/outcome-assurance.js");
             await access("backend/dist/backend/src/modules/outcomes/assurance.js");
             await access("backend/dist/shared/contracts/outcome-assurance.js");

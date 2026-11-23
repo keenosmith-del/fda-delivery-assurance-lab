@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { INVESTIGATIONS } from '../../shared/contracts/investigations.ts';
 import { FDA_EVENTS, FDA_GATEWAY } from '../../shared/contracts/fda-ingestion.ts';
 import { privateFixture } from '../support/private-fixture.ts';
 
@@ -19,6 +20,11 @@ test('protected origin serves the compiled frontend to a viewer and rejects publ
     await page.getByRole('navigation', { name: 'Workspace' }).getByRole('link', { name: 'FDA Integration' }).click();
     await expect(page.getByRole('heading', { name: 'Synthetic source' })).toBeVisible();
     expect((await request.get(`${FDA_GATEWAY}/status`)).status()).toBe(401);
+    expect((await request.get(INVESTIGATIONS + '/configuration')).status()).toBe(401);
+    const investigationConfig = await page.evaluate(async path => (await fetch(path)).json(), INVESTIGATIONS + '/configuration');
+    expect(investigationConfig).toMatchObject({ operator: false });
+    if (!live) expect(investigationConfig.inferenceAvailable).toBe(false);
+
     expect(await page.evaluate(async path => (await fetch(path, {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}',
     })).status, FDA_EVENTS)).toBe(401);

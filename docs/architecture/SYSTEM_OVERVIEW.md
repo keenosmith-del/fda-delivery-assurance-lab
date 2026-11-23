@@ -77,3 +77,7 @@ Migration 010 adds scoped adoption assessments, usage observations, receipts and
 ## Delivery outcome assurance
 
 The outcome layer follows the approved delivery case through independent operation verification, scoped adoption evidence and an explicitly aligned synthetic time study. A versioned ruleset evaluates effort and workload comparability. PostgreSQL stores source observations, receipts and append-only operator review revisions. The standalone outcome examples continue to use their own fixtures.
+
+## Evidence Investigation
+
+The investigation service collects a read-only snapshot of case evidence, stores a scoped citation registry, and optionally submits a compact fact packet to a configured OpenAI Responses adapter. The model selects relevant claims and advisory actions. The server checks the citations and values and keeps the result separate from human review. The delivery, downstream, adoption and outcome services continue to own their authorised mutations.

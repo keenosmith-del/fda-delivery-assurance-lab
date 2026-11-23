@@ -52,6 +52,7 @@ DATABASE_URL="$database_url" node --input-type=module -e '
   import { database } from "./backend/src/db/pool.ts";
   import { randomUUID } from "node:crypto";
   import { outcomeFixture } from "./scripts/outcome-fixture.ts";
+  import { readInvestigation, requestInvestigation, reviewInvestigation } from "./backend/src/modules/investigations/service.ts";
   import { readOutcomeAssurance, receiveOutcome, recordOutcomeReview } from "./backend/src/modules/outcomes/assurance.ts";
   import { receiveObservation } from "./backend/src/modules/adoption/assurance.ts";
   import { fixtureWindows } from "./scripts/adoption-fixture.ts";
@@ -76,6 +77,14 @@ DATABASE_URL="$database_url" node --input-type=module -e '
       fingerprint: evidence.fingerprint, outcome: "reviewed-synthetic-comparison",
       justification: "Matched four synthetic opportunities for the restore exercise.", limitations: "Synthetic laboratory data." },
       { role: "operator", sourceRevision: null });
+    const actor = { role: "operator", sourceRevision: null };
+    const investigation = await requestInvestigation(pool,fixtureScope,delivery.id,{
+      category:"outcome-verification",question:"Which evidence supports the reviewed synthetic outcome?",
+      requestId:randomUUID(),runInference:false,...selection,
+    },actor);
+    const saved = await readInvestigation(pool,fixtureScope,investigation.id);
+    await reviewInvestigation(pool,fixtureScope,investigation.id,{ requestId:randomUUID(),expectedRevision:0,
+      fingerprint:saved.fingerprint,decision:"request-evidence",reason:"Keep the historical scope and request further engineering evidence." },actor);
   } finally { await pool.end(); }
 '
 stop_fda_api
@@ -143,6 +152,7 @@ DATABASE_URL="$database_url" node --input-type=module -e '
   import assert from "node:assert/strict";
   import { database } from "./backend/src/db/pool.ts";
   import { readOutcomeAssurance } from "./backend/src/modules/outcomes/assurance.ts";
+  import { readInvestigation } from "./backend/src/modules/investigations/service.ts";
   import { fixtureScope } from "./scripts/fda-fixture.ts";
   async function read(url) {
     const pool = database(url);
@@ -151,7 +161,13 @@ DATABASE_URL="$database_url" node --input-type=module -e '
       const outcome = await readOutcomeAssurance(pool, fixtureScope, delivery.id);
       assert.equal(outcome.reviewedDifference, 140);
       assert.equal(outcome.reviewHistory[0].stale, false);
-      return outcome;
+      const { rows: [investigation] } = await pool.query("SELECT id FROM fda_investigations");
+      const history = await readInvestigation(pool,fixtureScope,investigation.id);
+      assert.equal(history.stale,false);
+      assert.equal(history.status,"needs-evidence");
+      assert.equal(history.reviews.length,1);
+      assert.equal(history.packet.citations.find(row => row.record === "outcome-assessment").facts.reviewedDifference,140);
+      return { outcome, history };
     } finally { await pool.end(); }
   }
   const url = process.env.DATABASE_URL;

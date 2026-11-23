@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { OUTCOME_RULE } from '../../../../shared/contracts/outcome-assurance.ts';
 import type { OutcomeObservation, OutcomeReview, OutcomeSelection } from '../../../../shared/contracts/outcome-assurance.ts';
+import type { AssessmentDetail, AssessmentRevision } from "../../../../shared/contracts/workflow-assessments.ts";
 import type { AdoptionScope } from '../../../../shared/contracts/adoption-assurance.ts';
 import type { EvidenceActor } from '../../api/evidence.ts';
 import type { Database, SqlClient } from '../../db/pool.ts';
@@ -58,11 +59,13 @@ function choose(input: OutcomeSelection) {
   return { baseline, comparison, method, ...(interventionId ? { interventionId } : {}) };
 }
 
-async function assemble(client: SqlClient, scope: AdoptionScope, id: string, selected?: OutcomeSelection) {
+export async function collectOutcomeAssurance(client: SqlClient, scope: AdoptionScope, id: string, selected?: OutcomeSelection) {
   const adoption = await readDeliveryAdoption(client, scope, id);
   const keys = key(scope, id);
-  const { rows: [context] } = await client.query<{ approvedRevision: unknown; decision: unknown; delivery: unknown; registered: boolean }>(`
-    SELECT r.body AS "approvedRevision", d.body AS decision, c.body AS delivery, (s.delivery_case_id IS NOT NULL) AS registered
+  const { rows: [context] } = await client.query<{ approvedRevision: AssessmentRevision; decision: Pick<AssessmentDetail["decisions"][number], "outcome" | "revision" | "conditions">;
+    delivery: Pick<AssessmentDetail["deliveryCases"][number], "readiness" | "prerequisites">; registered: boolean; decisionAt: Date; deliveryAt: Date }>(`
+    SELECT r.body AS "approvedRevision", d.body AS decision, c.body AS delivery, d.decided_at AS "decisionAt",
+      c.created_at AS "deliveryAt", (s.delivery_case_id IS NOT NULL) AS registered
     FROM fda_workflow_delivery_cases c
     JOIN fda_workflow_revisions r ON (r.tenant_id,r.source_id,r.assessment_id,r.revision)=(c.tenant_id,c.source_id,c.assessment_id,c.revision)
     JOIN fda_workflow_decisions d ON (d.tenant_id,d.source_id,d.id)=(c.tenant_id,c.source_id,c.decision_id)
@@ -135,7 +138,7 @@ async function assemble(client: SqlClient, scope: AdoptionScope, id: string, sel
 }
 
 export function readOutcomeAssurance(db: Database, scope: AdoptionScope, id: string, selected?: OutcomeSelection) {
-  return transaction(db, client => assemble(client, scope, id, selected), true);
+  return transaction(db, client => collectOutcomeAssurance(client, scope, id, selected), true);
 }
 
 export function recordOutcomeReview(db: Database, scope: AdoptionScope, id: string, input: OutcomeReview, actor: EvidenceActor) {
@@ -150,7 +153,7 @@ export function recordOutcomeReview(db: Database, scope: AdoptionScope, id: stri
       if (fingerprint(prior.decision) !== fingerprint(input)) throw new AssuranceError('OUTCOME_REVIEW_REPLAY_CONFLICT', 409);
       return { id, revision: prior.revision };
     }
-    const detail = await assemble(client, scope, id, choose(input));
+    const detail = await collectOutcomeAssurance(client, scope, id, choose(input));
     if (input.expectedRevision !== detail.latestRevision || input.fingerprint !== detail.fingerprint) {
       throw new AssuranceError('OUTCOME_EVIDENCE_OR_REVIEW_CHANGED', 409);
     }

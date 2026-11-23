@@ -142,3 +142,9 @@ Use the local adoption publisher with the same scoped lab credential as FDA-shap
 Reuse the configured scoped FDA publisher token and a loopback API. Retrieve the approved case ID, workflow ID and ISO operation verification timestamp from its delivery-linked evidence. Run `npm run outcome:publish -- CASE_ID WORKFLOW_ID VERIFIED_AT model`, then repeat with `baseline` and `comparison`. Use the corresponding adoption periods from the [connected demonstration](../iterations/ITERATION_20_END_TO_END_OUTCOME_ASSURANCE.md#reproduce-the-connected-demonstration).
 
 Open **FDA-linked Outcome Assurance**, check the selected periods and evidence gaps, record a justified review with the workspace operator access, and download the evidence package. The application export references the independent simulator effect. The simulator's own effect store has a separate persistence lifecycle.
+
+## Evidence Investigation
+
+Open a delivery case or choose **Evidence Investigation** in the workspace. Select the investigation category and preview the scoped records. Save a deterministic packet or explicitly request analysis using the configured provider. Inspect a citation and record the human disposition with a reason. If the packet is stale, start a new investigation for the current evidence.
+
+For local provider configuration, use the values in `.env.example` and keep credentials server-side. A failed inference shows a bounded error category. Check hosted approval, the selected model, the provider quota and the configured timeout as applicable. An interrupted or expired request retains its evidence and failure state.

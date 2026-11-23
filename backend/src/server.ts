@@ -2,6 +2,7 @@ import { access } from 'node:fs/promises';
 import { join } from 'node:path';
 import { loadMigrations, migrationsReady } from './db/migrations.ts';
 import { createApp } from './api/app.ts';
+import { configureProvider } from './modules/investigations/provider.ts';
 import { readConfig } from './config/env.ts';
 import { labToken } from './modules/downstream/adapter.ts';
 import { database } from './db/pool.ts';
@@ -15,6 +16,7 @@ if (downstreamToken && [config.LAB_FDA_SOURCE_TOKEN, config.LAB_WRITE_TOKEN, con
   config.LAB_VIEWER_PASSWORD, config.LAB_DEMO_PASSWORD].includes(downstreamToken)) throw new Error('Use a dedicated downstream service credential.');
 const app = createApp({
   pool,
+  investigationProvider: configureProvider(process.env, config.hosted),
   fdaSource: config.fdaSource,
   downstream: { enabled: !config.hosted && Boolean(downstreamToken), token: downstreamToken },
   environment: config.LAB_MODE,

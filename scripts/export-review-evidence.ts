@@ -1,3 +1,6 @@
+import { INVESTIGATIONS } from '../shared/contracts/investigations.ts';
+import { fixtureProvider } from '../tests/support/investigation-model.ts';
+import { setTimeout as delay } from 'node:timers/promises';
 import { OUTCOME_ASSURANCE, OUTCOME_MEASUREMENTS } from '../shared/contracts/outcome-assurance.ts';
 import { outcomeFixture } from './outcome-fixture.ts';
 import { ADOPTION_ASSURANCE, ADOPTION_OBSERVATIONS } from '../shared/contracts/adoption-assurance.ts';
@@ -23,7 +26,7 @@ const directory = process.argv[2];
 assert(directory, 'Pass a new output directory.');
 const fixture = await openTestDatabase();
 const sourceToken = randomUUID().replaceAll('-', '');
-const app = createApp({ pool: fixture.pool, enableFaults: true, environment: 'test', revision: process.env.LAB_SOURCE_REVISION,
+const app = createApp({ pool: fixture.pool, enableFaults: true, environment: 'test', investigationProvider: fixtureProvider, revision: process.env.LAB_SOURCE_REVISION,
   fdaSource: { ...fixtureScope, token: sourceToken } });
 
 type Observation = { method: 'GET' | 'POST'; path: string; status: number; requestId: string | undefined };
@@ -40,6 +43,19 @@ async function download(url: string, filename: string, trace?: Observation[]) {
   const data = response.json();
   if (trace) data.testRequestTrace = { transport: 'Fastify in-process HTTP injection', requests: trace };
   await writeFile(join(directory, filename), JSON.stringify(data, null, 2) + '\n', { flag: 'wx' });
+}
+
+async function investigate(caseId: string, question: string, scope: object, filename?: string, status = 'ready') {
+  const requested = await post(INVESTIGATIONS + '/cases/' + caseId, 202, { ...scope, question, requestId: randomUUID(), runInference: true });
+  const url = INVESTIGATIONS + '/' + requested.id;
+  let result = (await app.inject(url)).json();
+  for (let i=0; result.status === 'running' && i<20; i++) {
+    await delay(20);
+    result = (await app.inject(url)).json();
+  }
+  assert.equal(result.status,status,question);
+  if (filename) await download(url + '/export',filename);
+  return {url,result};
 }
 
 try {
@@ -98,6 +114,22 @@ try {
     outcome: 'reviewed-synthetic-comparison', justification: 'Matched the same four synthetic opportunities and included all effort.',
     limitations: 'Synthetic observations support a handling-time comparison only.' });
   await download(outcomeUrl + '/export' + query, 'delivery-outcome-assurance.json');
+  const recoveryScope = { category: 'retry-reconciliation' };
+  const recovery = await investigate(firstCase, 'Why did downstream recovery require an authoritative lookup?', recoveryScope,
+    'investigation-lost-acknowledgment.json');
+  assert.equal(recovery.result.packet.citations.find(item => item.record === 'downstream-operation').facts.verifiedEffects,1);
+  const connected = await investigate(firstCase, 'Which persisted records support the reviewed synthetic handling result?',
+    { category:'end-to-end', ...selection });
+  assert.equal(connected.result.packet.citations.find(item => item.record === 'outcome-assessment').facts.reviewedDifference,140);
+  await post(connected.url + '/reviews', 200, { requestId:randomUUID(),expectedRevision:0,fingerprint:connected.result.fingerprint,
+    decision:'reject-findings',reason:'Preserved the evidence for review and rejected the proposed next step.' });
+  await download(connected.url + '/export','investigation-connected-reviewed.json');
+  await investigate(firstCase,'Which evidence explains higher human handling overhead?',
+    {category:'outcome-verification',baseline:'period-001',comparison:'period-003'},'investigation-negative-outcome.json');
+  await investigate(firstCase,'What time-study coverage is missing from this comparison?',
+    {category:'outcome-verification',baseline:'period-001',comparison:'period-005'},'investigation-insufficient-outcome.json');
+  await investigate(firstCase,'Exercise unknown citation in the bounded model output.', recoveryScope,'investigation-rejected-citation.json','validation-failed');
+
   for (const [comparison, scenario, expected] of [
     ['period-003', 'increased-overhead', -100], ['period-004', 'unchanged-effort', 0], ['period-005', 'incomplete-coverage', null],
   ] as const) {
@@ -116,6 +148,9 @@ try {
   assert.equal(stale.reviewedDifference, null);
   assert.equal(stale.reviewHistory[0].snapshot.comparison.difference, 140);
   await download(outcomeUrl + '/export' + query, 'delivery-outcome-stale-review.json');
+  assert.equal((await app.inject(connected.url)).json().stale,true);
+  await download(connected.url + '/export','investigation-stale-snapshot.json');
+
 
 
 
@@ -124,6 +159,9 @@ try {
   const secondCase = (await app.inject(assessment)).json().deliveryCases.at(-1).id;
   const redrive = await exerciseDownstreamEvidence(fixture.pool, secondCase, 'pre-commit');
   await download(DOWNSTREAM_API + '/operations/' + redrive.operation.id + '/export', 'downstream-exhaustion-and-redrive.json');
+  await investigate(secondCase,'What changed after the initial pre-commit execution failed?',
+    {category:'downstream-failure'},'investigation-pre-commit-redrive.json');
+
   const task = '/api/workflow/tasks/offer-review';
   await post(task + '/reviews', 201, {
     classification: 'approve', suitability: 'reject', reason: 'Synthetic offer review requires human judgment.',

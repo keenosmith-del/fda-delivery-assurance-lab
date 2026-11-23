@@ -113,20 +113,22 @@ export function readCase(db: Database, scope: FdaScope, id: string) {
   }, true);
 }
 
+export async function collectOperationEvidence(client: SqlClient, scope: FdaScope, id: string) {
+  const { rows: [operation] } = await client.query<Operation>(
+    'SELECT * FROM fda_downstream_operations WHERE tenant_id=$1 AND source_id=$2 AND id=$3', [...scopeValues(scope), id]);
+  if (!operation) throw new DownstreamError('OPERATION_NOT_FOUND', 404);
+  const { rows: [job] } = await client.query('SELECT phase, due_at, lease_until FROM fda_downstream_jobs WHERE operation_id=$1', [id]);
+  const { rows: attempts } = await client.query(`SELECT id, phase, attempt_number, recovered_lease, started_at, finished_at, metadata
+    FROM fda_downstream_attempts WHERE operation_id=$1 ORDER BY id`, [id]);
+  const { rows: history } = await client.query(`SELECT id, action, role, reason, application_revision, recorded_at
+    FROM fda_downstream_audit WHERE operation_id=$1 ORDER BY id`, [id]);
+  return { operation, job: job ?? null, attempts, history, units: { timestamps: 'UTC', retryDelay: 'milliseconds' },
+    limitations: ['Synthetic downstream effects only.', 'Dispatch is at least once where retried. Effect identity is unique.',
+      'An authenticated workspace role supplies the execution attestation.'] };
+}
+
 export function operationEvidence(db: Database, scope: FdaScope, id: string) {
-  return transaction(db, async client => {
-    const { rows: [operation] } = await client.query<Operation>(
-      'SELECT * FROM fda_downstream_operations WHERE tenant_id=$1 AND source_id=$2 AND id=$3', [...scopeValues(scope), id]);
-    if (!operation) throw new DownstreamError('OPERATION_NOT_FOUND', 404);
-    const { rows: [job] } = await client.query('SELECT phase, due_at, lease_until FROM fda_downstream_jobs WHERE operation_id=$1', [id]);
-    const { rows: attempts } = await client.query(`SELECT phase, attempt_number, recovered_lease, started_at, finished_at, metadata
-      FROM fda_downstream_attempts WHERE operation_id=$1 ORDER BY id`, [id]);
-    const { rows: history } = await client.query(`SELECT action, role, reason, application_revision, recorded_at
-      FROM fda_downstream_audit WHERE operation_id=$1 ORDER BY id`, [id]);
-    return { operation, job: job ?? null, attempts, history, units: { timestamps: 'UTC', retryDelay: 'milliseconds' },
-      limitations: ['Synthetic downstream effects only.', 'Dispatch is at least once where retried. Effect identity is unique.',
-        'An authenticated workspace role supplies the execution attestation.'] };
-  }, true);
+  return transaction(db, client => collectOperationEvidence(client, scope, id), true);
 }
 
 const conflicts = ['EFFECT_MISMATCH', 'IDEMPOTENCY_CONFLICT', 'DOWNSTREAM_REJECTED'];

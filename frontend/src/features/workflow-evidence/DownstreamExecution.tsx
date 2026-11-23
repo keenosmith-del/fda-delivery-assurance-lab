@@ -90,7 +90,8 @@ export function DownstreamExecution({ caseId, token }: { caseId: string; token: 
   return <section aria-label="Synthetic downstream execution">
     <h4>Synthetic downstream execution</h4>
     <a href={`#adoption?dataset=fda&case=${caseId}`}>Open FDA-linked Adoption Diagnostics</a>{' · '}
-    <a href={`#outcomes?dataset=fda&case=${caseId}`}>FDA-linked Outcome Assurance</a>
+    <a href={`#outcomes?dataset=fda&case=${caseId}`}>FDA-linked Outcome Assurance</a>{' · '}
+    <a href={`#investigations?category=retry-reconciliation&case=${caseId}`}>Investigate downstream evidence</a>
     {error && <p role="alert">{error}</p>}
     {!info && !error && <p>Loading execution eligibility…</p>}
     {info && <>

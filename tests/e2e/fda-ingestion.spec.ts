@@ -89,7 +89,7 @@ test('records an incident, verifies new reporting evidence and exports its audit
 });
 
 test('approves an imported workflow and exports its verified execution after a lost acknowledgment', async ({ page, request }) => {
-  test.setTimeout(90_000);
+  test.setTimeout(115_000);
   const publish = (scenario: string) => publishScenario(async event => {
     const response = await request.post(FDA_EVENTS, {
       data: event, headers: { authorization: `Bearer ${browserSource.token}` },
@@ -241,10 +241,46 @@ test('approves an imported workflow and exports its verified execution after a l
   const outcomeExport = page.waitForEvent('download');
   await page.getByRole('link', { name: 'Download outcome evidence', exact: true }).click();
   expect((await outcomeExport).suggestedFilename()).toMatch(/-outcome-assurance.json$/);
+  await page.getByRole('navigation', { name: 'Outcome evidence links' }).getByRole('link', { name: 'Evidence Investigation', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Evidence Investigation', exact: true })).toBeVisible();
+  await expect(page.getByRole('status').filter({hasText:'Configured provider available'})).toBeVisible();
+  await page.getByLabel('Engineering question').fill('Which evidence supports the reviewed synthetic outcome?');
+  await page.getByRole('button', { name: 'Request AI analysis', exact: true }).click();
+  await expect(page.getByText('Investigation status · Human review required', { exact: true })).toBeVisible({timeout:15000});
+  const investigationUrl = page.url();
+  const modelRegion = page.getByRole('region', {name:'Model-generated analysis'});
+  const cite = modelRegion.getByRole('button', {name:/^(outcome|adoption|downstream|engineering)-[0-9a-f]{24}$/}).first();
+  const citationId = await cite.innerText();
+  await cite.click();
+  await expect(page.locator('#citation-' + citationId).getByRole('link',{name:'Inspect application source record'})).toBeVisible();
+  await page.getByLabel('Investigation review decision').selectOption('reject-findings');
+  await page.getByLabel('Investigation review reason').fill('Keep the analysis advisory while the study evidence is reviewed.');
+  await page.getByRole('button', {name:'Record investigation review'}).click();
+  await expect(page.getByText('Investigation status · rejected',{exact:true})).toBeVisible();
+  await page.reload();
+  await expect(page.getByText(/Revision 1 · reject findings/)).toBeVisible();
+  const investigationExport = page.waitForEvent('download');
+  await page.getByRole('link', {name:'Download investigation evidence',exact:true}).click();
+  expect((await investigationExport).suggestedFilename()).toMatch(/-investigation.json$/);
+  await page.getByLabel('Investigation category').selectOption('retry-reconciliation');
+  await page.getByRole('button', {name:'Preview selected evidence'}).click();
+  await page.getByLabel('Engineering question').fill('Exercise unknown citation in the synthetic findings report.');
+  await page.getByRole('button', {name:'Request AI analysis',exact:true}).click();
+  await expect(page.getByText('Investigation status · Model validation failed',{exact:true})).toBeVisible({timeout:15000});
+  await expect(page.getByText(/Validation · failed.*unknown citation/)).toBeVisible();
+  await page.goto(investigationUrl);
+  await expect(page.getByText('Investigation status · rejected',{exact:true})).toBeVisible();
+  await page.getByRole('link', {name:'Outcome Verification',exact:true}).last().click();
+  await expect(page.getByRole('heading', {name:'FDA-linked Outcome Assurance'})).toBeVisible();
+
   const effort = timeStudy.events('comparison').find(event => event.kind === 'effort' && event.category === 'review')!;
   expect((await publishTime({ ...effort, duration: 25, eventId: randomUUID(), sourceRevision: 'b'.repeat(40) })).status()).toBe(201);
   await page.getByRole('button', { name: 'Refresh outcome evidence' }).click();
   await expect(page.getByText('Outcome state · stale review', { exact: true })).toBeVisible();
+  await page.goto(investigationUrl);
+  await expect(page.getByText('Evidence changed. Start a new investigation to review current evidence.',{exact:true})).toBeVisible();
+  await page.getByRole('link', {name:'Outcome Verification',exact:true}).last().click();
+
   await expect(page.getByText('Reviewed difference · Unknown', { exact: true })).toBeVisible();
 
   await page.getByRole('link', { name: 'Workflow Evidence and delivery case' }).click();

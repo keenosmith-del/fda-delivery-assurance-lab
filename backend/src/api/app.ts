@@ -15,6 +15,8 @@ import { evidenceDownload, sourceRevision } from './evidence.ts';
 import type { ExportContext } from './evidence.ts';
 import { queueStatus } from '../workers/telemetry.ts';
 
+import { registerInvestigations } from './investigations.ts';
+import type { Provider } from '../modules/investigations/provider.ts';
 import { registerOutcomeAssurance } from './outcome-assurance.ts';
 import { registerAdoptionAssurance } from './adoption-assurance.ts';
 import { registerDownstream } from './downstream.ts';
@@ -25,6 +27,7 @@ import type { FdaSourceConfig } from './fda-ingestion.ts';
 
 interface Options {
   pool: Database;
+  investigationProvider?: Provider;
   fdaSource?: FdaSourceConfig;
   downstream?: { enabled: boolean; token?: string };
   writeToken?: string;
@@ -37,7 +40,7 @@ interface Options {
   checkSchema?: () => Promise<boolean>;
 }
 
-export function createApp({ pool, writeToken, enableFaults, logger = false, access, uiDir, checkSchema, environment = 'local', revision, fdaSource, downstream }: Options) {
+export function createApp({ pool, writeToken, enableFaults, logger = false, access, uiDir, checkSchema, environment = 'local', revision, fdaSource, downstream, investigationProvider }: Options) {
   const app = Fastify({ logger, genReqId: () => randomUUID(), requestIdHeader: false, requestTimeout: 12_000, bodyLimit: 4096, logController: new LogController({ disableRequestLogging: true }) });
   const digest = (value: string) => createHash('sha256').update(value).digest();
   const expectedToken = writeToken ? digest(writeToken) : null;
@@ -159,6 +162,8 @@ export function createApp({ pool, writeToken, enableFaults, logger = false, acce
   registerDownstream(app, pool, scope, downstream?.enabled === true, authorizeOperator, actor, exportContext, [fdaSource?.token, downstream?.token]);
   registerAdoptionAssurance(app, pool, scope, authorizeOperator, actor, exportContext, fdaSource?.token, downstream?.token);
   registerOutcomeAssurance(app, pool, scope, authorizeOperator, actor, exportContext, fdaSource?.token, downstream?.token);
+  registerInvestigations(app, pool, scope, authorizeOperator, actor, exportContext, [fdaSource?.token, downstream?.token],
+    access || writeToken || environment === 'test' ? investigationProvider : undefined);
   registerIntelligence(app, pool, canWrite, actor, exportContext);
   registerMeasurement(app, pool, canWrite, actor, exportContext);
   return app;

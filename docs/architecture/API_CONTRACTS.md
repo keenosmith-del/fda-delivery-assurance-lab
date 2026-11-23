@@ -138,3 +138,9 @@ Use `/api/integrations/fda/v1/outcome-assurance`. `GET /cases` lists scoped deli
 `POST /measurements` accepts strict `fda-lab.outcome-measurement/v1` period, effort and model events using the configured synthetic source credential. Accepted submissions return 201, exact replay returns 200 and conflicting replay returns 409. Source submissions require the configured tenant and source, and browser-origin submissions are rejected.
 
 `POST /cases/:id/reviews` requires operator access, the selected periods and method, a request UUID, the current evidence fingerprint and the expected latest revision. The service recalculates eligibility and appends the review and snapshot atomically. A changed fingerprint or revision returns 409. Viewer access permits inspection and export through the workspace controls.
+
+## Evidence Investigation
+
+Use `/api/integrations/fda/v1/investigations`. `GET /configuration` reports inference and operator availability. `GET /cases` lists scoped delivery cases and accepts an optional workflow filter. `GET /cases/:id` lists a case’s investigation history. `GET /cases/:id/evidence` previews a deterministic packet for a category and optional baseline, comparison, method and intervention. The preview makes no provider request.
+
+`POST /cases/:id` takes the same scope, a unique `requestId`, bounded `question` and explicit `runInference`. An in-flight request returns 202. Identical replays return the existing ID. `GET /:id` returns status, historical packet, citation registry, validation, human review and staleness. `GET /:id/export` downloads the same scoped evidence. `POST /:id/reviews` takes a unique request UUID, expected revision, historical fingerprint, decision and reason, and adds a human audit revision.
