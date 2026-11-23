@@ -152,7 +152,8 @@ describe('agent assurance across independent publisher, workspace and database',
     expect(resolved.audit.filter(entry => entry.action === 'verify').map(entry => entry.detail.outcome))
       .toEqual(['insufficient-evidence', 'verified-recovered']);
     expect(resolved.audit.at(-1)?.detail.evidence).toEqual([expect.objectContaining({ sourceRecordId: 'record-074' })]);
-    expect(await workflow('workflow-002')).toMatchObject({ readiness: 'additional-evidence-required' });
+    expect(await workflow('workflow-002')).toMatchObject({ readiness: 'blocked-by-operations',
+      windows: [{ blockers: expect.arrayContaining([expect.objectContaining({ endpointId: 'endpoint-008' })]) }] });
     await publish(app, 'assurance-regression');
     const reopened = await post('/incidents', { endpointId: 'endpoint-006', windowId: 'window-001', category: 'reporting-interruption' });
     expect(reopened.json()).toMatchObject({ state: 'open' });

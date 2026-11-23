@@ -55,3 +55,7 @@ The [source register](../research/SOURCE_REGISTER.md) separates published Attain
 ## Imported source evidence
 
 The simulated FDA dataset traces each canonical event to the receipt that processed it. Endpoint history and workflow observations link to those receipts. Event occurrence, server receipt and processing timestamps identify distinct stages. Source-supplied coverage and recommendations are evidence inputs, while derived reporting, missing intervals and unresolved relationships come from the lab's read models. Imported permissions do not establish lawful authorization. The existing evidence exports continue to describe their original fixture datasets.
+
+## Workflow planning decisions
+
+An assessment revision freezes its canonical evidence, receipt links, readiness rule version, feasibility, suitability and risk inputs. A decision links to that precise revision. Its export also includes current evidence so changes can be identified while the saved evidence remains independently readable. Role-level operator attestation, source observations, deterministic rules and external prerequisites appear as distinct records.

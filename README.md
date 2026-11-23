@@ -2,20 +2,20 @@
 
 **An independent forward-deployed engineering assessment of workflow discovery, operational reliability, and measurable automation outcomes.**
 
-This project explores how an observed operational bottleneck can move through engineering investigation, implementation, verification, and measurable business impact. It is informed by the publicly documented attain FDA workflow, a supplied product walkthrough, and a published HIREXE internal workflow study.
-
-The goal is **not to recreate or replace Attain**. It is to develop and demonstrate complementary engineering capabilities, using an independently implemented system and synthetic test data.
+The lab shows how a synthetic FDA finding moves from ingestion and operational evidence to a human engineering decision, an implementation plan, and verifiable outcomes. The independent demonstration draws on public attain materials and uses synthetic records throughout.
 
 ## Engineering workstreams
 
-1. **ATS reliability and recovery** — Design a transaction-safe submission flow with idempotency, durable operation state, retry recovery, asynchronous confirmation, auditability, and reproducible failure injection.
-2. **Workflow evidence and scoring** — Inspect detected tasks, supporting evidence, heuristic classification and automation suitability scores, and gaps in endpoint reporting coverage.
-3. **Adoption diagnostics** — Investigate low-adoption automations, record hypotheses about possible barriers, document corrective actions, and track follow-up measurements.
-4. **Outcome verification** — Distinguish observed activity, modeled savings, and verified improvements; calculate adoption-adjusted results while accounting for failures and rework.
+1. **FDA Integration** imports versioned synthetic endpoint, workflow and measurement records with canonical provenance.
+2. **Agent Operational Assurance** evaluates reporting and permissions and verifies incident recovery from new source evidence.
+3. **Workflow Evidence and Engineering Decisions** links observations to technical feasibility, risk reviews, human decisions and scoped delivery cases.
+4. **Delivery Reliability** demonstrates idempotency, reconciliation and recovery through the supporting ATS submission example.
+5. **Adoption Diagnostics** records evidence-backed hypotheses, changes and follow-up decisions.
+6. **Outcome Verification** distinguishes observed work, modeled opportunity and reviewed synthetic evidence.
 
 ## Current implementation
 
-The workspace includes the ATS reliability runner and lost-acknowledgment comparison, Workflow Evidence with persisted review history, Agent Health with independently tracked reporting, permissions and evidence freshness, and two measurement workspaces. Adoption Diagnostics stores evidence-backed findings, owned interventions, implementation dates and follow-up decisions. Outcome Verification separates observed work, modeled opportunity, estimated savings and reviewed synthetic time studies. PostgreSQL stores the synthetic fixtures, submission operations, audit events, and review history. A separate worker confirms ATS operations.
+The gateway, independent publisher, incident verification, and workflow assessment and planning services persist to PostgreSQL. This version records approved delivery plans and their prerequisites. The ATS example exercises downstream execution and confirmation independently. The adoption and outcome workspaces analyze their own synthetic measurement fixtures.
 
 Use Node.js 24 and Docker Compose. From the project root:
 
@@ -32,6 +32,10 @@ In separate terminals, run `npm run dev`, `npm run dev:worker` and `npm run dev:
 ## Simulated FDA integration
 
 An independent publisher sends versioned, minimized synthetic records over HTTP. After configuring the source token in the [runbook](docs/operations/RUNBOOK.md#simulated-fda-import), run `npm run fda:publish`. Open **FDA Integration** to inspect persisted source receipts and to trace endpoint and workflow data into **Agent Health** and **Workflow Evidence**. The gateway and publisher implement a hypothetical, lab-owned contract.
+
+## Workflow assessment and engineering decisions
+
+Import the normal synthetic fixture and publish `assurance-complete-window`. Open `workflow-003` in imported **Workflow Evidence**, record feasibility and risk, and submit the current revision for a human decision. An eligible approval can create a durable delivery case. [Workflow assessment runbook](docs/operations/RUNBOOK.md#workflow-assessment-and-engineering-decisions)
 
 ## Demonstration scenarios
 
@@ -70,7 +74,7 @@ See the [verification matrix](docs/testing/VERIFICATION.md) for the local checks
 The root Dockerfile packages API, frontend and worker. See the [deployment runbook](docs/operations/DEPLOYMENT_RUNBOOK.md), [access policy](docs/operations/SECURITY_AND_ACCESS.md) and [staging verification](docs/testing/STAGING_VERIFICATION.md) for launch procedure, test coverage and provider status.
 
 
-See [Evidence integrity](docs/architecture/EVIDENCE_INTEGRITY.md) for the scoring rubric, calculation inputs, and interpretation of synthetic outcome and adoption comparisons. The verification workflow attaches the six generated JSON receipts to each successful release run.
+See [Evidence integrity](docs/architecture/EVIDENCE_INTEGRITY.md) for the scoring rubric, calculation inputs, and interpretation of synthetic outcome and adoption comparisons. The verification workflow attaches the generated JSON evidence packages to each successful release run.
 
 ### Agent operational assurance
 

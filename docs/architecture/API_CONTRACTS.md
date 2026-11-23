@@ -94,3 +94,19 @@ Routes live under `/api/integrations/fda/v1/assurance` and inherit the configure
 | `GET /incidents/:id/export` | Evidence download with scoped receipt links, original assessment, audited verification outcomes, role and revision, and stated limits. |
 
 Writes cap the request body at 4 KiB. Incident and export lookups return 404 for unknown or out-of-scope IDs. Missing and duplicate evidence can never promote an incident to resolved without the category-specific recovery predicates.
+
+## Workflow assessment and engineering decisions
+
+Routes live under `/api/integrations/fda/v1/workflow-assessments`. Scope comes from the configured FDA source. Hosted viewers can inspect the same scoped engineering history and exports that an operator can review. The local workspace follows its configured operator token. Hosted writes require the operator role and the configured origin.
+
+| Method and path | Behaviour |
+| --- | --- |
+| `GET /` | List scoped assessment identities. |
+| `GET /:workflowId` | Read the current and historical revisions, current evidence, stale status, decisions, delivery cases and audit events. |
+| `POST /:workflowId` | Open or return a review of the imported candidate. The body is an empty JSON object. |
+| `POST /:workflowId/revisions` | Append a revision through `reassess`, `feasibility`, `risks` or `submit`. Supply the current positive integer `revision` and fields for the action. |
+| `POST /:workflowId/decisions` | Record a disposition with `revision`, `outcome`, `justification` and `conditions`. A pilot also requires `pilot` with operating limits, human review and stop criteria. |
+| `POST /:workflowId/delivery-cases` | Create or return the case for the supplied current approved `revision`. |
+| `GET /:workflowId/export` | Download the scoped snapshot and engineering history as JSON. |
+
+The shared schemas define exact request shapes and field bounds. Writes accept at most 32 KiB. Invalid input returns 400, forbidden writes return 403 after authentication, and an absent scoped record returns 404. Stale evidence, revisions or conflicting transitions return 409. A blocked approval or unavailable eligible decision returns 422. A successful engineering decision does not supply an external authorisation or an independently verified credential.

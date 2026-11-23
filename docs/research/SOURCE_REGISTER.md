@@ -13,3 +13,7 @@ The ATS application uses generated candidate codes and an independent schema. Re
 The independent engineering review of the lab walkthrough identified the need for exportable evidence and clearer claims. It evaluated the synthetic application and reviewed source at `0a7f294d62bdfcbf4e2f818ca160b4a4da2a9632`. It supplies no new vendor telemetry or production measurements. See [evidence integrity](../architecture/EVIDENCE_INTEGRITY.md) for the reproducible lab results and explicit inference limits.
 
 The `fda-lab.ingestion/v1` schema and simulated publisher are lab-owned hypotheses. All endpoint, observation and workflow references are synthetic. The source register establishes engineering context for the modeled categories and provides no evidence of a compatible attain API or event stream.
+
+### Workflow assessment boundary
+
+Imported FDA-shaped observations and recommendations are synthetic inputs to the engineering review. The lab's feasibility, readiness, approval and planning models are independent engineering constructs. They do not document a private attain approval workflow or imply access to any external client environment.

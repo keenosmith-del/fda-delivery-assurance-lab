@@ -1,3 +1,4 @@
+import { WorkflowAssessment } from '../workflow-evidence/WorkflowAssessment.tsx';
 import { z } from 'zod';
 import { workflowAssurance } from '../../../../shared/contracts/agent-assurance.ts';
 import { FDA_GATEWAY, fdaAgentProjection, fdaReceipt, fdaRecordLink, fdaStatus, fdaWorkflowProjection } from '../../../../shared/contracts/fda-ingestion.ts';
@@ -152,6 +153,7 @@ export function ImportedWorkflowEvidence({ receiptId, workflowId }: { receiptId?
         <ReceiptLinks records={[observation.receipt]} />
       </section>)}
       <h3>Candidate and window provenance</h3><ReceiptLinks records={item.receipts} />
+      <WorkflowAssessment workflowId={item.candidate.workflowId} />
     </details>)}
   </>;
 }

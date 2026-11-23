@@ -76,10 +76,14 @@ export const incidentDetail = incidentSummary.extend({
   current: assuranceDevice.nullable(),
   workflows: z.array(z.string()),
 });
+export const WORKFLOW_READINESS_RULES = 'fda-lab.workflow-readiness/v2';
+
 export const workflowAssurance = z.array(z.object({
+  ruleVersion: z.literal(WORKFLOW_READINESS_RULES),
   workflowId: z.string(), readiness: z.enum(['ready-for-review', 'additional-evidence-required', 'blocked-by-operations', 'unknown']),
   windows: z.array(z.object({
     windowId: windowKey, affectedEndpoints: z.array(endpointKey), gaps: z.array(z.string()),
+    blockers: z.array(z.object({ endpointId: endpointKey, category: incidentCategory, reason: z.string() })),
     incidents: z.array(incidentSummary), missingIntervals: z.array(z.object({ endpointId: endpointKey, start: sourceTimestamp, end: sourceTimestamp })),
   })),
 }));

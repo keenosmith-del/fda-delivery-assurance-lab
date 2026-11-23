@@ -36,6 +36,7 @@ export async function publishScenario(transport: PublisherTransport, scenario: s
     'assurance-permission-recovery': { events: f.assurancePermissionRecovery, statuses: [200, 201] },
     'assurance-regression': { events: f.assuranceRegression, statuses: [200, 201] },
     'assurance-out-of-order': { events: f.assuranceOlder, statuses: [200, 201] },
+    'workflow-evidence-change': { events: f.workflowEvidenceChange, statuses: [200, 201] },
     'assurance-complete-window': { events: f.assuranceComplete, statuses: [200, 201] },
     'invalid-contract': { events: [f.invalid], statuses: [400] },
     'tenant-violation': { events: [f.violation], statuses: [403] },

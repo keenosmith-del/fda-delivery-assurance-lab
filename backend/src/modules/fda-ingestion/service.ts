@@ -1,3 +1,4 @@
+import { lockFdaEvidence } from './scope-lock.ts';
 import { createHash, randomUUID } from 'node:crypto';
 import { FDA_CONTRACT, fdaEvent, fdaRecordType, fdaReceipt, receiptStatus, sourceRecordId, sourceTimestamp } from '../../../../shared/contracts/fda-ingestion.ts';
 import type { FdaCanonicalRecord, FdaEvent, FdaReceipt, FdaScope } from '../../../../shared/contracts/fda-ingestion.ts';
@@ -111,6 +112,7 @@ export async function processEvent(db: Database, accepted: { id: string; event: 
   const { id, event, hash } = accepted;
   const key = [...scopeValues(event), event.sourceRecordId];
   await transaction(db, async client => {
+    await lockFdaEvidence(client, accepted.event);
     const result = await client.query<{ status: string; attempts: number; payload_fingerprint: string }>(
       `SELECT status, attempts, payload_fingerprint FROM fda_source_events
        WHERE tenant_id = $1 AND source_id = $2 AND source_record_id = $3 FOR UPDATE`, key);

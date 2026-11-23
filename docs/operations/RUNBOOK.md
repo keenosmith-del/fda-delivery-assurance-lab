@@ -112,3 +112,15 @@ Start the existing local stack and apply the migrations, including 007. Configur
 7. Use the workflow links to inspect the affected cohort, earlier missing intervals and linked cases. Run `npm run fda:publish -- assurance-complete-window` after the reporting recovery to inspect the separate, complete `window-003` assessment.
 
 Additional scenarios include `delayed-delivery`, `assurance-version-transition`, `assurance-version-recovery`, `assurance-out-of-order` and `duplicate-replay`. Use a fresh disposable database when repeating verification exercises. Evidence already received before implementation remains historical and cannot pass the post-intervention timing rule.
+
+## Workflow assessment and engineering decisions
+
+1. Start a disposable local workspace, apply migration 008, and use the same synthetic source configuration as the FDA import walkthrough. Run `npm run fda:publish -- normal`, then `npm run fda:publish -- assurance-complete-window`.
+2. Open **Workflow Evidence → Simulated FDA**, select `workflow-003`, and inspect its complete window and candidate receipts. Select **Open engineering assessment**.
+3. Expand **Technical feasibility and assumptions**. Review the sequence, expected inputs and outputs, synthetic integration, access and recovery controls, and at least one alternative or a reason none is viable. Use `verified in lab` only for a lab-verified integration. Record the phases and save the revision.
+4. Open **Risk register**, record the risks and their basis or document the basis for a clear review, then select **Submit for decision** and give a reason. An ordinary approval requires ready evidence and resolved mandatory dependencies. For a pilot, select a human-supervised execution model and record explicit scope, human review and stop criteria. An unreviewed elevated risk or high residual risk blocks approval. Use **Reject** when the evidence does not support the proposed plan.
+5. Record **Approve implementation planning** or **Approve supervised pilot planning** with a justification. Choose **Create delivery case** and review the case prerequisites. If external client approval or credentials are unverified, the plan remains blocked. **Download workflow assessment JSON** includes source, revision, decision and case history.
+6. Open `workflow-002` to see blockers directly from operational records before opening any incident. Inspect its missing intervals, open an assessment, submit it and record **Defer**. `workflow-001` illustrates a window with incomplete endpoint readiness evidence.
+7. Run `npm run fda:publish -- workflow-evidence-change` to replace a supporting observation for `workflow-003`. Select **Refresh assessment** to see the stale warning. Create a reassessment revision and review it before recording a new decision. The previous decision, receipt set and delivery case remain inspectable.
+
+Run the historical export generator with a fresh output directory to produce a test planning package with the six earlier evidence files. See `scripts/export-review-evidence.ts`.
