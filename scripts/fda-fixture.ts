@@ -99,6 +99,42 @@ export function buildFixture(scope: FdaScope = fixtureScope) {
         observedAt: time('11:55'), sequence: ['receive', 'validate', 'transfer'], durationSeconds: 125, exception: false,
       }),
     ],
+    assuranceVersion: [event(81, 'endpoint.status', '11:55', {
+      endpointId: endpoint(4), heartbeatAt: time('11:54'), connection: 'online', lastObservationAt: time('11:30'),
+      capture: 'available', agentVersion: '2.0.0', diagnostics: ['version-updated'],
+    })],
+    assuranceVersionRecovery: [event(82, 'endpoint.status', '11:59', {
+      endpointId: endpoint(4), heartbeatAt: time('11:58'), connection: 'online', lastObservationAt: time('11:30'),
+      capture: 'available', agentVersion: '1.2.0', diagnostics: ['version-updated'],
+    })],
+    assurancePartial: [
+      event(83, 'endpoint.permission', '11:54', { endpointId: endpoint(7), category: 'screen', status: 'granted',
+        reportedAt: time('11:54'), consentReference: 'unknown' }),
+      event(84, 'endpoint.status', '11:55', { endpointId: endpoint(7), heartbeatAt: time('11:55'), connection: 'online',
+        capture: 'available', lastObservationAt: null, diagnostics: ['recovered'] }),
+    ],
+    assurancePermissionRecovery: [event(85, 'workflow.observation', '11:59', {
+      observationId: 'observation-006', workflowId: 'workflow-002', endpointId: endpoint(7), windowId: 'window-001',
+      observedAt: time('11:58'), sequence: ['receive', 'validate', 'transfer'], durationSeconds: 130, exception: false,
+    })],
+    assuranceRegression: [event(86, 'endpoint.status', '11:59', {
+      endpointId: endpoint(6), heartbeatAt: time('11:58'), connection: 'offline', lastObservationAt: time('11:55'),
+      capture: 'limited', diagnostics: ['reporting-interrupted'],
+    })],
+    assuranceOlder: [event(87, 'endpoint.status', '11:53', {
+      endpointId: endpoint(6), heartbeatAt: time('09:00'), connection: 'offline', lastObservationAt: time('09:00'),
+      capture: 'limited', diagnostics: ['reporting-interrupted'],
+    })],
+    assuranceComplete: [
+      event(88, 'endpoint.status', '12:55', { endpointId: endpoint(6), heartbeatAt: time('12:54'), connection: 'online',
+        lastObservationAt: time('12:45'), capture: 'available', queueCount: 0, diagnostics: ['recovered'] }),
+      event(89, 'observation.window', '13:00', { windowId: 'window-003', start: time('12:00'), end: time('13:00'),
+        eligibleEndpoints: [endpoint(6)], observedEndpoints: [endpoint(6)], reportingCount: 1, completeness: 'complete' }),
+      event(90, 'workflow.observation', '12:46', { observationId: 'observation-007', workflowId: 'workflow-003', endpointId: endpoint(6),
+        windowId: 'window-003', observedAt: time('12:45'), sequence: ['receive', 'report'], durationSeconds: 60, exception: false }),
+      event(91, 'workflow.candidate', '13:05', { workflowId: 'workflow-003', windowIds: ['window-003'],
+        observationIds: ['observation-007'], category: 'periodic-reporting', frequency: 1, unit: 'per-window', recommendation: 'investigate' }),
+    ],
     invalid: { ...registrations[0], schemaVersion: 'fda-lab.ingestion/v99' },
     violation: { ...registrations[0], tenantId: scope.tenantId === 'tenant-999' ? 'tenant-998' : 'tenant-999' },
   };

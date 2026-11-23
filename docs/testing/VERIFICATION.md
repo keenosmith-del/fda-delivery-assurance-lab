@@ -45,3 +45,11 @@ Coverage includes both outcome comparisons, modeled versus reviewed reconciliati
 | Hosted CI | A new run requires a verified milestone commit and push. |
 
 The test suite derives every imported record from the API and checks the storage and read models. Sample source credentials are disposable harness values. Use the existing native PostgreSQL and Chromium CI setup for the release verification gate.
+
+## Milestone 08 agent operational assurance
+
+The local suite exercises historical assessment, non-truncated canonical reads, scope and role isolation, concurrent case operations, restart persistence, partial and verified recovery, a later recurrence, workflow gate changes and incident exports. Migration tests include a populated Milestone 07 schema. The PostgreSQL restore exercise compares incident, audit and scoped receipt association counts on both sides of the backup.
+
+- Local backend suite with disposable PGlite includes Milestone 08 tests and the existing regressions. The supported local checks also cover type-checking, production build, shell syntax and historical evidence exports.
+- The standard browser suite includes an operator journey that records and implements an intervention, verifies insufficient evidence, imports later evidence, resolves the case and downloads its export. The private suite retains its hosted access and regression checks.
+- Native PostgreSQL, Chromium execution, PostgreSQL backup/restore and Docker image verification run in GitHub Actions when local infrastructure is unavailable.

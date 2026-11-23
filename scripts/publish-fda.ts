@@ -30,6 +30,13 @@ export async function publishScenario(transport: PublisherTransport, scenario: s
     'reporting-interruption': { events: [f.interruption], statuses: [200, 201] },
     'delayed-delivery': { events: [f.delayed], statuses: [200, 201] },
     recovery: { events: f.recovery, statuses: [200, 201] },
+    'assurance-version-transition': { events: f.assuranceVersion, statuses: [200, 201] },
+    'assurance-version-recovery': { events: f.assuranceVersionRecovery, statuses: [200, 201] },
+    'assurance-partial-recovery': { events: f.assurancePartial, statuses: [200, 201] },
+    'assurance-permission-recovery': { events: f.assurancePermissionRecovery, statuses: [200, 201] },
+    'assurance-regression': { events: f.assuranceRegression, statuses: [200, 201] },
+    'assurance-out-of-order': { events: f.assuranceOlder, statuses: [200, 201] },
+    'assurance-complete-window': { events: f.assuranceComplete, statuses: [200, 201] },
     'invalid-contract': { events: [f.invalid], statuses: [400] },
     'tenant-violation': { events: [f.violation], statuses: [403] },
   };

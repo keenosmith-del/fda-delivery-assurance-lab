@@ -173,9 +173,11 @@ export async function getStatus(db: Database, scope: FdaScope, enabled: boolean)
   }, true);
 }
 
+export type ReceivedCanonical = FdaCanonicalRecord & { receivedAt: Date };
+
 export async function listCanonical(db: SqlClient, scope: FdaScope, kinds?: readonly FdaEvent['recordType'][]) {
-  const { rows } = await db.query<FdaCanonicalRecord>(`SELECT c.id, c.subject_id AS "subjectId",
-    r.id AS "receiptId", e.envelope || jsonb_build_object('payload', c.payload) AS event
+  const { rows } = await db.query<ReceivedCanonical>(`SELECT c.id, c.subject_id AS "subjectId",
+    r.id AS "receiptId", r.received_at AS "receivedAt", e.envelope || jsonb_build_object('payload', c.payload) AS event
     FROM fda_canonical_records c
     JOIN fda_source_events e USING (tenant_id, source_id, source_record_id)
     JOIN fda_ingestion_receipts r ON r.canonical_id = c.id AND r.status = 'processed'

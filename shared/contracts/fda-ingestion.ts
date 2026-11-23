@@ -129,7 +129,8 @@ export const fdaAgentProjection = z.object({
 export const fdaWorkflowProjection = z.array(z.object({
   candidate: fdaPayloads['workflow.candidate'], windows: z.array(assessmentWindow),
   observations: z.array(z.object({
-    ...fdaPayloads['workflow.observation'].shape, deliveredLate: z.boolean(), receipt: fdaRecordLink,
+    ...fdaPayloads['workflow.observation'].shape, deliveredLate: z.boolean(), deliverySeconds: z.number().nonnegative().nullable(),
+    receivedAt: timestamp, arrivedAfterWindow: z.boolean(), reportedAfterWindow: z.boolean(), receipt: fdaRecordLink,
   })),
   gaps: z.array(z.string()), receipts: z.array(fdaRecordLink),
 }));

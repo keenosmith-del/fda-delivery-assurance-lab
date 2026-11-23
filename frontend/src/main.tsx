@@ -58,7 +58,8 @@ function App() {
     <nav className="navigation" aria-label="Workspace">
       {routes.map(route => <a href={`#${route.id}`} key={route.id} aria-current={active.id === route.id ? 'page' : undefined}>{route.label}</a>)}
     </nav>
-    <main><View receiptId={receiptId} /></main>
+    <main><View receiptId={receiptId} incidentId={params.get('incident') ?? undefined}
+      windowId={params.get('window') ?? undefined} workflowId={params.get('workflow') ?? undefined} /></main>
     <footer>Independent engineering assessment</footer>
   </div>;
 }
