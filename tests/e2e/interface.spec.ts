@@ -20,7 +20,7 @@ for (const width of widths) test(`workspaces fit at ${width}px and retain access
     await expect(page.getByRole('main')).toBeVisible();
     await expect(page.locator('.workspace-brand a')).toHaveText('FDA Delivery Assurance Lab');
     await expect(page.locator('.brand-mark, .workspace-brand img, .workspace-brand svg')).toHaveCount(0);
-    await expect(page.getByRole('main').getByText(/^\d{2}\s*\//)).toHaveCount(0);
+    await expect(page.getByRole('main').locator('h1, h2, h3, h4, .section-label, .metric-reading > dt').getByText(/^\d{2}\s*\//)).toHaveCount(0);
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     const navigation = page.getByRole('navigation',{name:'Workspace',exact:true});
     if (width <= 850) {

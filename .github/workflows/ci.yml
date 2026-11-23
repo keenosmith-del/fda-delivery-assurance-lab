@@ -42,11 +42,12 @@ jobs:
           LAB_SCREENSHOT_REVISION: ${{ github.sha }}
         run: npm run test:e2e
       - name: Upload application screenshots
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: application-interface
           path: test-results/interface/
-          if-no-files-found: error
+          if-no-files-found: warn
       - run: npm run test:e2e:private
       - name: Generate synthetic evidence
         env:

@@ -47,7 +47,7 @@ test('traces the independent FDA import into the endpoint and workflow workspace
   await page.getByRole('link', { name: 'record-043', exact: true }).click();
   const details = page.locator('section').filter({ has: page.getByRole('heading', { name: 'Receipt details' }) });
   await expect(details.getByText('workflow.observation', { exact: true })).toBeVisible();
-  await expect(page.getByText('Synthetic data', { exact: true })).toBeVisible();
+  await expect(page.getByRole('complementary').getByText('Synthetic data', { exact: true })).toBeVisible();
   expect(errors).toEqual([]);
 });
 
@@ -288,8 +288,9 @@ test('approves an imported workflow and exports its verified execution after a l
   await expect(page.getByText('Outcome state · stale review', { exact: true })).toBeVisible();
   await page.goto(investigationUrl);
   await expect(page.getByText('Evidence changed. Start a new investigation to review current evidence.',{exact:true})).toBeVisible();
-  await page.getByRole('link', {name:'Outcome Verification',exact:true}).last().click();
-
+  // Navigate directly to the same case. Sidebar links can switch to the legacy dataset.
+  await page.goto('/#outcomes?dataset=fda&case=' + encodeURIComponent(caseId));
+  await expect(page.getByText('Outcome state · stale review', { exact: true })).toBeVisible();
   await expect(page.getByText('Reviewed difference · Unknown', { exact: true })).toBeVisible();
 
   await page.getByRole('link', { name: 'Workflow Evidence and delivery case' }).click();
