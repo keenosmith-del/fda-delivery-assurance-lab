@@ -42,3 +42,7 @@ Set the image source to a verified release. Configure the start and pre-deploy c
 6. For rollback, redeploy the previous verified image to the affected service. Additive migrations remain in place and old readers validate their own expected checksums. For incompatible database changes, stop writes and use the recovery procedure in [incident recovery](INCIDENT_RECOVERY.md).
 
 Railway references cover [private networking](https://docs.railway.com/networking/private-networking) and [pre-deployment commands](https://docs.railway.com/deployments/pre-deploy-command).
+
+## Synthetic downstream runtime
+
+The image contains both downstream entrypoints and migration 009. The synthetic services are intended for a local or disposable CI lab. Hosted deployment uses the existing API with synthetic execution disabled. Keep the lab operation database and simulator effect database separate. The lab backup proves restoration of effect references. The simulator requires a separate backup and restore.

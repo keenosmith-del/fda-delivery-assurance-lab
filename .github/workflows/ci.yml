@@ -57,6 +57,9 @@ jobs:
             import { access } from "node:fs/promises";
             await import("./backend/dist/backend/src/api/app.js");
             await access("frontend/dist/index.html");
+            await access("database/migrations/009_downstream_operations.sql");
+            await access("backend/dist/backend/src/workers/downstream.js");
+            await access("backend/dist/backend/src/downstream-simulator.js");
             await access("backend/dist/backend/src/workers/run.js");
             await access("database/migrations/005_evidence_provenance.sql");
             await access("database/migrations/006_fda_ingestion.sql");

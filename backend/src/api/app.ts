@@ -15,6 +15,7 @@ import { evidenceDownload, sourceRevision } from './evidence.ts';
 import type { ExportContext } from './evidence.ts';
 import { queueStatus } from '../workers/telemetry.ts';
 
+import { registerDownstream } from './downstream.ts';
 import { registerWorkflowAssessments } from './workflow-assessments.ts';
 import { registerAgentAssurance } from './agent-assurance.ts';
 import { registerFdaIngestion } from './fda-ingestion.ts';
@@ -23,6 +24,7 @@ import type { FdaSourceConfig } from './fda-ingestion.ts';
 interface Options {
   pool: Database;
   fdaSource?: FdaSourceConfig;
+  downstream?: { enabled: boolean; token?: string };
   writeToken?: string;
   enableFaults?: boolean;
   logger?: boolean;
@@ -33,7 +35,7 @@ interface Options {
   checkSchema?: () => Promise<boolean>;
 }
 
-export function createApp({ pool, writeToken, enableFaults, logger = false, access, uiDir, checkSchema, environment = 'local', revision, fdaSource }: Options) {
+export function createApp({ pool, writeToken, enableFaults, logger = false, access, uiDir, checkSchema, environment = 'local', revision, fdaSource, downstream }: Options) {
   const app = Fastify({ logger, genReqId: () => randomUUID(), requestIdHeader: false, requestTimeout: 12_000, bodyLimit: 4096, logController: new LogController({ disableRequestLogging: true }) });
   const digest = (value: string) => createHash('sha256').update(value).digest();
   const expectedToken = writeToken ? digest(writeToken) : null;
@@ -152,6 +154,7 @@ export function createApp({ pool, writeToken, enableFaults, logger = false, acce
   };
   registerAgentAssurance(app, pool, scope, authorizeOperator, actor, exportContext);
   registerWorkflowAssessments(app, pool, scope, authorizeOperator, actor, exportContext);
+  registerDownstream(app, pool, scope, downstream?.enabled === true, authorizeOperator, actor, exportContext, [fdaSource?.token, downstream?.token]);
   registerIntelligence(app, pool, canWrite, actor, exportContext);
   registerMeasurement(app, pool, canWrite, actor, exportContext);
   return app;

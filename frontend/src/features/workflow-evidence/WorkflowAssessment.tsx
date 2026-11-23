@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { assessmentDetail, decisionOutcome, WORKFLOW_ASSESSMENTS } from '../../../../shared/contracts/workflow-assessments.ts';
 import type { AssessmentDetail } from '../../../../shared/contracts/workflow-assessments.ts';
 import { dateLabel } from '../../lib/dates.ts';
+import { DownstreamExecution } from './DownstreamExecution.tsx';
 import { FeasibilityForm, RiskForm, Note, lines, value, human } from './FeasibilityForm.tsx';
 
 const decisionLabels = {
@@ -148,6 +149,7 @@ export function WorkflowAssessment({ workflowId }: { workflowId: string }) {
         <ul>{d.prerequisites.map((p, i) => <li key={i}>{p.requirement} · {human(p.status)} · {p.basis}</li>)}</ul>
         {d.risks.length > 0 && <ul>{d.risks.map((risk, i) => <li key={i}>{risk.description} · {risk.residual} residual risk · {risk.mitigation}</li>)}</ul>}
         <ol>{d.plan.phases.map((phase, i) => <li key={i}>{phase}</li>)}</ol>
+        <DownstreamExecution caseId={d.id} token={token} />
       </details>)}
       <details><summary>Revision and audit history</summary>
         {item.revisions.map(r => <details key={r.revision}><summary>Revision {r.revision} · {human(r.stage)}</summary>

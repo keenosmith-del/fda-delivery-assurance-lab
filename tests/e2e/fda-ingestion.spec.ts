@@ -83,7 +83,7 @@ test('records an incident, verifies new reporting evidence and exports its audit
   await expect(workflow.getByText('Blocked by operational conditions', { exact: true })).toBeVisible();
 });
 
-test('assesses an imported candidate, approves planning, creates a delivery case and exports the saved decision', async ({ page, request }) => {
+test('approves an imported workflow and exports its verified execution after a lost acknowledgment', async ({ page, request }) => {
   const publish = (scenario: string) => publishScenario(async event => {
     const response = await request.post(FDA_EVENTS, {
       data: event, headers: { authorization: `Bearer ${browserSource.token}` },
@@ -150,6 +150,19 @@ test('assesses an imported candidate, approves planning, creates a delivery case
   const download = page.waitForEvent('download');
   await workflow.getByRole('link', { name: 'Download workflow assessment JSON' }).click();
   expect((await download).suggestedFilename()).toBe('workflow-003-engineering-assessment.json');
+  const execution = workflow.getByRole('region', { name: 'Synthetic downstream execution' });
+  await execution.getByLabel('Execution reason').fill('Run the approved synthetic report in the isolated downstream lab.');
+  await execution.getByLabel('Authorise one operation against the lab simulator').check();
+  await execution.getByRole('button', { name: 'Start synthetic execution' }).click();
+  await expect(execution.getByRole('status')).toHaveText('Execution state · succeeded');
+  await execution.getByText('Dispatch and reconciliation evidence', { exact: true }).click();
+  const attemptEvidence = execution.locator('pre');
+  await expect(attemptEvidence.filter({ hasText: 'ACKNOWLEDGMENT_UNAVAILABLE' })).toBeVisible();
+  await expect(attemptEvidence.filter({ hasText: 'authoritative-effect-lookup' })).toBeVisible();
+  await expect(execution.getByText('1 dispatches · 1 lookups', { exact: true })).toBeVisible();
+  const executionExport = page.waitForEvent('download');
+  await execution.getByRole('link', { name: 'Download downstream execution evidence' }).click();
+  expect((await executionExport).suggestedFilename()).toMatch(/-downstream-assurance.json$/);
   await publish('workflow-evidence-change');
   await workflow.getByRole('button', { name: 'Refresh assessment' }).click();
   await expect(workflow.getByText(/Source evidence has changed since this revision/)).toBeVisible();

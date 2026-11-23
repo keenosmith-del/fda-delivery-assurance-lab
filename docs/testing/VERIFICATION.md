@@ -57,3 +57,7 @@ The local suite exercises historical assessment, non-truncated canonical reads, 
 ## Milestone 09 workflow assessment
 
 The backend suite covers direct source-derived blockers without an incident, revision and approval races, workflow scope, actor roles, stale evidence, migration upgrades, rejected and deferred decisions, pilot planning, and idempotent cases. The Chromium suite uses real imported source records for feasibility and risk review, a planning decision, delivery, reload, export and stale evidence. The PostgreSQL backup exercise verifies workflow revision and receipt associations, a decision, case and audit history after restoration. CI also exports a scoped engineering assessment beside the previous evidence artifacts.
+
+## Downstream execution verification
+
+Run `npx vitest run backend/tests/downstream.test.ts` for the disposable database and simulator contract suite. The unrestricted Playwright FDA journey closes the real downstream HTTP response after committing the effect and verifies one dispatch and an authoritative lookup. The evidence export and PostgreSQL backup checks verify operation associations and independently recovered effect references. Docker checks compile and package both runtime entrypoints.
