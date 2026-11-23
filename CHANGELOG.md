@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added scoped synthetic downstream execution, durable dispatch, worker lease recovery and independently reconciled effect evidence.
+
 - Added auditable assessments, engineering decisions and delivery cases for imported FDA workflows.
 - Made operational evidence blockers independent of incident creation and added stale-evidence checks before approval and case creation.
 

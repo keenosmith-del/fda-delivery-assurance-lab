@@ -48,6 +48,15 @@ node --input-type=module -e '
     return response.json();
   }, base);
 '
+DATABASE_URL="$database_url" node --input-type=module -e '
+  import { database } from "./backend/src/db/pool.ts";
+  import { exerciseDownstreamEvidence } from "./scripts/downstream-evidence-fixture.ts";
+  const pool = database(process.env.DATABASE_URL);
+  try {
+    const { rows: [delivery] } = await pool.query("SELECT id FROM fda_workflow_delivery_cases");
+    await exerciseDownstreamEvidence(pool, delivery.id, "lost-acknowledgment");
+  } finally { await pool.end(); }
+'
 stop_fda_api
 unset LAB_FDA_SOURCE_TOKEN LAB_FDA_PUBLISHER_ORIGIN
 docker exec "$container" pg_dump -Fc -U fda -d fda_backup_source > "$RUNNER_TEMP/fda-fixture.dump"
@@ -74,3 +83,16 @@ before="$(docker exec "$container" psql -At -U fda -d fda_backup_source -c "$fix
 after="$(docker exec "$container" psql -At -U fda -d fda_backup_restore -c "$fixture_query")"
 [[ "$before" == "$after" && "$after" =~ ^6\|[1-9][0-9]+\|3\|[1-9][0-9]*\|1\|1\|2\|1\|4\|[1-9][0-9]*\|1\|1\|6$ ]]
 printf 'PostgreSQL backup round trip verified. Matching migration checksums. Tasks | executions | attributed studies | imported records with receipts | incidents | incident actions | incident receipt links | workflow assessments | revisions | revision receipts | decisions | delivery cases | workflow actions: %s\n' "$after"
+downstream_query="SELECT
+  (SELECT count(*) FROM fda_downstream_operations d JOIN fda_workflow_delivery_cases c
+    ON (d.delivery_case_id,d.tenant_id,d.source_id,d.assessment_id,d.revision,d.decision_id)
+      =(c.id,c.tenant_id,c.source_id,c.assessment_id,c.revision,c.decision_id)
+    WHERE d.state='succeeded' AND d.verified_effect_id IS NOT NULL),
+  (SELECT count(*) FROM fda_downstream_attempts WHERE phase='dispatch'),
+  (SELECT count(*) FROM fda_downstream_attempts a JOIN fda_downstream_operations d ON a.operation_id=d.id
+    WHERE a.phase='reconcile' AND a.metadata->>'effectId'=d.verified_effect_id::text),
+  (SELECT count(*) FROM fda_downstream_audit)"
+for database in fda_backup_source fda_backup_restore; do
+  downstream="$(docker exec "$container" psql -At -U fda -d "$database" -c "$downstream_query")"
+  [[ "$downstream" == '1|1|1|3' ]]
+done

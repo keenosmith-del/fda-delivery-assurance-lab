@@ -9,13 +9,13 @@ The lab shows how a synthetic FDA finding moves from ingestion and operational e
 1. **FDA Integration** imports versioned synthetic endpoint, workflow and measurement records with canonical provenance.
 2. **Agent Operational Assurance** evaluates reporting and permissions and verifies incident recovery from new source evidence.
 3. **Workflow Evidence and Engineering Decisions** links observations to technical feasibility, risk reviews, human decisions and scoped delivery cases.
-4. **Delivery Reliability** demonstrates idempotency, reconciliation and recovery through the supporting ATS submission example.
+4. **Downstream Integration and Delivery Reliability** runs approved delivery cases through a synthetic HTTP simulator, verifies downstream effects independently, and retains the ATS recovery example.
 5. **Adoption Diagnostics** records evidence-backed hypotheses, changes and follow-up decisions.
 6. **Outcome Verification** distinguishes observed work, modeled opportunity and reviewed synthetic evidence.
 
 ## Current implementation
 
-The gateway, independent publisher, incident verification, and workflow assessment and planning services persist to PostgreSQL. This version records approved delivery plans and their prerequisites. The ATS example exercises downstream execution and confirmation independently. The adoption and outcome workspaces analyze their own synthetic measurement fixtures.
+The gateway, independent publisher, incident verification, and workflow assessment and planning services persist to PostgreSQL. Approved delivery plans include prerequisites and can authorise local synthetic execution. The downstream worker records dispatch and verifies the effect through the simulator. The ATS example retains its separate confirmation flow. The adoption and outcome workspaces analyze their own synthetic measurement fixtures.
 
 Use Node.js 24 and Docker Compose. From the project root:
 

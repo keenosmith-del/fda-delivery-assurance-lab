@@ -1,3 +1,5 @@
+import { DOWNSTREAM_API } from '../shared/contracts/downstream.ts';
+import { exerciseDownstreamEvidence } from './downstream-evidence-fixture.ts';
 import { fixtureScope } from './fda-fixture.ts';
 import { publishScenario } from './publish-fda.ts';
 import { FDA_EVENTS } from '../shared/contracts/fda-ingestion.ts';
@@ -50,6 +52,14 @@ try {
   const assessment = WORKFLOW_ASSESSMENTS + '/workflow-003';
   await createFixtureDelivery((path, payload) => post(path, 200, payload), assessment);
   await download(assessment + '/export', 'workflow-003-engineering-assessment.json');
+  const firstCase = (await app.inject(assessment)).json().deliveryCases[0].id;
+  const lost = await exerciseDownstreamEvidence(fixture.pool, firstCase, 'lost-acknowledgment');
+  await download(DOWNSTREAM_API + '/operations/' + lost.operation.id + '/export', 'downstream-lost-acknowledgment.json');
+  await post(assessment + '/revisions', 200, { revision: 4, action: 'reassess', reason: 'Open a new synthetic baseline for the pre-commit recovery scenario.' });
+  await createFixtureDelivery((path, payload) => post(path, 200, payload), assessment);
+  const secondCase = (await app.inject(assessment)).json().deliveryCases.at(-1).id;
+  const redrive = await exerciseDownstreamEvidence(fixture.pool, secondCase, 'pre-commit');
+  await download(DOWNSTREAM_API + '/operations/' + redrive.operation.id + '/export', 'downstream-exhaustion-and-redrive.json');
   const task = '/api/workflow/tasks/offer-review';
   await post(task + '/reviews', 201, {
     classification: 'approve', suitability: 'reject', reason: 'Synthetic offer review requires human judgment.',

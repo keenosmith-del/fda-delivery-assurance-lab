@@ -27,3 +27,7 @@ pg_restore --exit-on-error --dbname="$ISOLATED_RESTORE_DATABASE_URL" synthetic-s
 ```
 
 Keep the previous database intact until the restored environment is checked. Pause writes before any approved cutover. Repoint API and worker together, then run migration readiness and the staging smoke script. The CI restore exercise validates a logical backup of disposable synthetic fixtures. It does not exercise provider snapshot restore.
+
+## Downstream recovery
+
+Inspect the last dispatch and lookup first. An expired lease triggers a lookup before any further dispatch. A verification mismatch or payload conflict requires investigation and cannot be redriven. After bounded exhaustion, an operator can request an authoritative lookup or one eligible redrive with a reason. Redrive requires a current case, an authoritative miss and no prior accepted acknowledgment. Queued operations can be cancelled before the first claim. Earlier dispatches must be reconciled.

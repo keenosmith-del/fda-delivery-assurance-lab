@@ -124,3 +124,11 @@ Additional scenarios include `delayed-delivery`, `assurance-version-transition`,
 7. Run `npm run fda:publish -- workflow-evidence-change` to replace a supporting observation for `workflow-003`. Select **Refresh assessment** to see the stale warning. Create a reassessment revision and review it before recording a new decision. The previous decision, receipt set and delivery case remain inspectable.
 
 Run the historical export generator with a fresh output directory to produce a test planning package with the six earlier evidence files. See `scripts/export-review-evidence.ts`.
+
+## Run synthetic downstream execution locally
+
+Start the lab and independent simulator databases with `docker compose -f infrastructure/docker/compose.yaml --profile downstream up -d`. Copy the downstream values from `.env.example` and generate a distinct lab-only token. Point `LAB_DOWNSTREAM_DATABASE_URL` at the disposable simulator database. Apply `npm run db:migrate` to the workspace database. Run the API and frontend as usual, plus `npm run dev:downstream-simulator` and `npm run dev:downstream-worker` in separate processes.
+
+Publish the normal FDA fixture and `npm run fda:publish -- assurance-complete-window`. In **Workflow Evidence**, open workflow-003, submit a feasible reviewed assessment and approve implementation planning. Create the delivery case and choose **Start synthetic execution** with the lab-only attestation. Inspect the attempt history and download the evidence. ATS confirmations continue through the original worker.
+
+For the acceptance fault, start the simulator with `LAB_MODE=test LAB_DOWNSTREAM_TEST_FAULT=lost-acknowledgment npm run dev:downstream-simulator` before authorising a fresh case. Dispatch records an unavailable acknowledgment, then authoritative lookup verifies the committed effect. Fault settings apply to newly presented operation identities. Use a new approved case for each scenario.

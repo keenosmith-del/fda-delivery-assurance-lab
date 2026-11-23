@@ -59,3 +59,7 @@ The simulated FDA dataset traces each canonical event to the receipt that proces
 ## Workflow planning decisions
 
 An assessment revision freezes its canonical evidence, receipt links, readiness rule version, feasibility, suitability and risk inputs. A decision links to that precise revision. Its export also includes current evidence so changes can be identified while the saved evidence remains independently readable. Role-level operator attestation, source observations, deterministic rules and external prerequisites appear as distinct records.
+
+## Downstream execution evidence
+
+The execution record retains the exact approval revision and source fingerprint at authorisation. Exports show a dispatch response separately from the authoritative lookup, including the expected and observed effect fingerprints and verified effect ID. The same evidence preserves terminal and ambiguous outcomes. The export generator exercises a post-commit acknowledgment loss and a pre-commit failure followed by explicit redrive.

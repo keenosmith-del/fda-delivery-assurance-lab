@@ -65,3 +65,7 @@ The assurance layer reads scoped canonical source records with server receipt ti
 ## Workflow assessment and planning
 
 Imported Workflow Evidence combines independent agent readiness with a human review of a versioned evidence snapshot. The assessment service records feasibility, risk, qualitative suitability, decision provenance and a scoped delivery case. A material evidence change requires reassessment before a new case can be authorised. The gateway and the assessment write services serialize evidence-sensitive decisions per source. See [Iteration 17](../iterations/ITERATION_17_WORKFLOW_ASSESSMENT_AND_DECISIONS.md).
+
+## Downstream execution
+
+The local API authorises one synthetic execution per approved delivery case. Migration 009 stores the case identity, decision, revision, source fingerprint, operation and its dispatch intent together. A separate worker claims jobs from PostgreSQL. A separate HTTP simulator owns the authoritative effect store. The worker compares the key, operation ID and fingerprint of the returned effect before recording success.

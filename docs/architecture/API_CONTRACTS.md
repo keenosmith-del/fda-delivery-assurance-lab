@@ -110,3 +110,19 @@ Routes live under `/api/integrations/fda/v1/workflow-assessments`. Scope comes f
 | `GET /:workflowId/export` | Download the scoped snapshot and engineering history as JSON. |
 
 The shared schemas define exact request shapes and field bounds. Writes accept at most 32 KiB. Invalid input returns 400, forbidden writes return 403 after authentication, and an absent scoped record returns 404. Stale evidence, revisions or conflicting transitions return 409. A blocked approval or unavailable eligible decision returns 422. A successful engineering decision does not supply an external authorisation or an independently verified credential.
+
+## Synthetic downstream execution
+
+The workspace prefix is `/api/integrations/fda/v1/downstream`.
+
+| Method | Route | Result |
+| --- | --- | --- |
+| GET | `/cases/:id` | Current eligibility, blockers, pilot restrictions and linked operation |
+| POST | `/cases/:id/start` | Accept explicit lab-only authorisation with `requestKey`, `reason`, `syntheticOnly` and optional `supervisionConfirmed` |
+| GET | `/operations/:id` | Persisted operation, next job, attempts and audit |
+| POST | `/operations/:id/actions` | Accept an eligible `cancel`, `reconcile` or `redrive` with a reason |
+| GET | `/operations/:id/export` | Versioned downstream evidence attachment |
+
+Writes require the operator role or the configured local equivalent and enabled execution. A repeated request key with identical content is accepted idempotently. A changed payload, a superseded case, or duplicate execution under a different key returns a conflict. A missing prerequisite or missing pilot confirmation returns 422.
+
+The dedicated loopback simulator accepts `POST /synthetic-downstream/v1/effects` and serves authoritative `GET /synthetic-downstream/v1/effects/:key` using its own bearer credential. The dispatch contract is `fda-lab.synthetic-effect/v1`.
