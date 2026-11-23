@@ -11,6 +11,7 @@ const migrations = await loadMigrations(config.MIGRATIONS_DIR);
 const pool = database(config.DATABASE_URL, config.databaseOptions);
 const app = createApp({
   pool,
+  fdaSource: config.fdaSource,
   environment: config.LAB_MODE,
   revision: process.env.LAB_SOURCE_REVISION ?? process.env.RAILWAY_GIT_COMMIT_SHA,
   writeToken: config.LAB_WRITE_TOKEN,

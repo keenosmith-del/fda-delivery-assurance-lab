@@ -71,7 +71,7 @@ export function Discover() {
   const visible = (tasks.data ?? []).filter(item => `${item.label} ${item.category}`.toLowerCase().includes(filter.trim().toLowerCase()));
 
   return <>
-    <section className="heading"><h1>Discover</h1><p>Inspect the synthetic events behind task classifications and automation recommendations.</p></section>
+    <section className="heading"><h1>Discover</h1><p>Inspect the synthetic events behind task classifications and automation recommendations. <a href="#discover?dataset=fda">View simulated FDA records</a></p></section>
     <div className="panels">
       <section className="panel"><h2>Task candidates</h2>
         <label htmlFor="task-filter">Filter tasks</label>

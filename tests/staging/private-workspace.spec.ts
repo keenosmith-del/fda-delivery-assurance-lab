@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { FDA_EVENTS, FDA_GATEWAY } from '../../shared/contracts/fda-ingestion.ts';
 import { privateFixture } from '../support/private-fixture.ts';
 
 const live = Boolean(process.env.LAB_SMOKE_ORIGIN);
@@ -15,6 +16,12 @@ test('protected origin serves the compiled frontend to a viewer and rejects publ
     await page.goto('/#outcomes');
     await expect(page.getByText('339.64 modeled occurrences')).toBeVisible();
     await expect(page.getByText(/Reviewed time studies recorded a difference/)).toBeVisible();
+    await page.getByRole('navigation', { name: 'Workspace' }).getByRole('link', { name: 'FDA Integration' }).click();
+    await expect(page.getByRole('heading', { name: 'Synthetic source' })).toBeVisible();
+    expect((await request.get(`${FDA_GATEWAY}/status`)).status()).toBe(401);
+    expect(await page.evaluate(async path => (await fetch(path, {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}',
+    })).status, FDA_EVENTS)).toBe(401);
   } finally {
     await context.close();
   }

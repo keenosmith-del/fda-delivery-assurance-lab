@@ -53,3 +53,7 @@ The deployment image packages the compiled frontend and API on one protected HTT
 ## Review evidence
 
 Workflow Evidence, ATS Reliability, Adoption Diagnostics and Outcome Verification provide authenticated JSON downloads in hosted mode. The receipts identify their source revision, persisted inputs and calculation version. ATS receipts include controlled failure decisions, with rollback decisions recorded separately from the operation transaction. See [evidence integrity](EVIDENCE_INTEGRITY.md) for the calculations, attribution limits and evidence boundaries.
+
+## Simulated FDA gateway
+
+An independent Node publisher sends strictly typed synthetic events through the HTTP adapter. The gateway authenticates the configured source, commits a receipt and source event, then projects canonical data under a per-event PostgreSQL lock. FDA Integration reads the receipts. The simulated source dataset in Agent Health and Workflow Evidence derives its records from the canonical store. Legacy fixtures and their reviews, comparisons and exports remain independently available. [Iteration 15](../iterations/ITERATION_15_FDA_INTEGRATION_GATEWAY.md) covers data boundaries and recovery.

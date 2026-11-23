@@ -30,3 +30,18 @@ The verification workflow generates the `synthetic-review-evidence` artifact wit
 For a disposable checkout with dependencies installed, run `node scripts/export-review-evidence.ts test-results/review-evidence` against a fresh output directory. Set `TEST_DATABASE_URL` to use native PostgreSQL with an isolated schema, and optionally set `LAB_SOURCE_REVISION` to a verified full SHA. With no test URL the script uses an embedded database. UUIDs and server timestamps vary across runs. Recomputable fixture counts, scoring inputs, quantities and conclusions are stable.
 
 Coverage includes both outcome comparisons, modeled versus reviewed reconciliation, missing inputs, audit links, role attribution, revision handling, protected downloads, redaction, and both synthetic ATS fault decisions. The evidence and private-browser fixtures do not contact live staging.
+
+## Milestone 07 · simulated FDA integration
+
+| Check | Local result |
+| --- | --- |
+| Clean dependency install, type-check and build | Passed on Node.js 24. Compiled API and gateway modules imported successfully. |
+| Backend regressions and FDA gateway | 43 passed, including nine gateway and migration tests. The existing five native-only cases require PostgreSQL 17. |
+| Migration | Fresh and previously migrated disposable PGlite databases passed. The existing fixture records and migration checksums were retained. |
+| Ingestion and projections | The publisher scenario driver exercised the Fastify request boundary. Observed results include ordinary import, replay, conflict, invalid schema, tenant denial, late observation, permission degradation, reporting interruption and recovery. |
+| Existing evidence export | Six JSON receipts generated. |
+| Browser | Nine standard and two private cases discovered. Both browser servers failed to bind to their loopback ports in the local runner. |
+| Native backup, restore and container verification | The Docker daemon was unavailable. The CI backup script now exercises a standalone publisher over HTTP and replays against a restarted API process before the backup comparison. Container verification imports the compiled gateway and checks that migration 006 is packaged. |
+| Hosted CI | A new run requires a verified milestone commit and push. |
+
+The test suite derives every imported record from the API and checks the storage and read models. Sample source credentials are disposable harness values. Use the existing native PostgreSQL and Chromium CI setup for the release verification gate.

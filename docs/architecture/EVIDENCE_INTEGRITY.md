@@ -51,3 +51,7 @@ Adoption and absolute successes increased. Failures rose from one to three, exce
 ## Research and verification boundaries
 
 The [source register](../research/SOURCE_REGISTER.md) separates published Attain statements, supplied source material, lab assumptions and hypotheses. The evidence here records reproducible synthetic experiments and verified application behaviour in the test environment. It establishes no live ATS confirmation, employee telemetry, real business benefit, causality or production performance.
+
+## Imported source evidence
+
+The simulated FDA dataset traces each canonical event to the receipt that processed it. Endpoint history and workflow observations link to those receipts. Event occurrence, server receipt and processing timestamps identify distinct stages. Source-supplied coverage and recommendations are evidence inputs, while derived reporting, missing intervals and unresolved relationships come from the lab's read models. Imported permissions do not establish lawful authorization. The existing evidence exports continue to describe their original fixture datasets.

@@ -91,3 +91,5 @@ textarea { width: 100%; resize: vertical; border: 1px solid #c8cdc4; border-radi
 .intervention h3 { margin-top: 0; }
 .export-link { display: inline-block; border-radius: 8px; text-decoration: none; padding: 8px 12px; }
 @media (max-width: 720px) { .measurement-panels { grid-template-columns: minmax(0, 1fr); } }
+
+.receipt-fingerprint { overflow-wrap: anywhere; }

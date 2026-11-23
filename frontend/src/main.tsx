@@ -5,10 +5,12 @@ import { Discover } from './features/workflow-evidence/Discover.tsx';
 import { AgentHealth } from './features/agent-health/AgentHealth.tsx';
 import { Adoption } from './features/adoption/Adoption.tsx';
 import { Outcomes } from './features/outcomes/Outcomes.tsx';
+import { FdaIntegration, ImportedAgentHealth, ImportedWorkflowEvidence } from './features/fda-integration/FdaIntegration.tsx';
 import './styles/app.css';
 
 const routes = [
   { id: 'overview', label: 'Overview', view: Overview },
+  { id: 'fda-integration', label: 'FDA Integration', view: FdaIntegration },
   { id: 'discover', label: 'Discover', view: Discover },
   { id: 'ats-reliability', label: 'ATS Reliability', view: Reliability },
   { id: 'agent-health', label: 'Agent Health', view: AgentHealth },
@@ -18,6 +20,7 @@ const routes = [
 
 function Overview() {
   const descriptions = [
+    'Inspect simulated source ingestion, canonical records and processing receipts.',
     'Inspect observed task sequences, scoring factors and review decisions.',
     'Trace submissions through commitment, acknowledgment loss and safe recovery.',
     'Inspect synthetic endpoint history, permissions and observation gaps.',
@@ -40,8 +43,13 @@ function subscribe(callback: () => void) {
 
 function App() {
   const hash = useSyncExternalStore(subscribe, () => window.location.hash.slice(1));
-  const active = routes.find(route => route.id === hash) ?? routes[0];
-  const View = active.view;
+  const [routeId, query] = hash.split('?', 2);
+  const params = new URLSearchParams(query);
+  const receiptId = params.get('receipt') ?? undefined;
+  const active = routes.find(route => route.id === routeId) ?? routes[0];
+  const imported = params.get('dataset') === 'fda';
+  const View = imported && active.id === 'agent-health' ? ImportedAgentHealth
+    : imported && active.id === 'discover' ? ImportedWorkflowEvidence : active.view;
   return <div className="workspace">
     <header className="masthead">
       <div className="brand"><span className="brand-mark" aria-hidden="true">fda</span> Delivery Assurance Lab</div>
@@ -50,7 +58,7 @@ function App() {
     <nav className="navigation" aria-label="Workspace">
       {routes.map(route => <a href={`#${route.id}`} key={route.id} aria-current={active.id === route.id ? 'page' : undefined}>{route.label}</a>)}
     </nav>
-    <main><View /></main>
+    <main><View receiptId={receiptId} /></main>
     <footer>Independent engineering assessment</footer>
   </div>;
 }

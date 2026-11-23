@@ -78,3 +78,23 @@ Applied migrations are checksum-verified. Preserve their contents and create a n
 4. Under **Outcome Verification**, inspect the baseline terms that yield 339.64 modeled weekly occurrences. Compare the complete candidate intake time study with the incomplete pipeline digest fixture, then download the selected comparison as JSON.
 
 The normal app runs against native PostgreSQL. The internal browser verification server uses a disposable fixture and is suitable for loopback-only synthetic review. Never put credentials or real operator data into these fixtures. Before public deployment, configure authenticated operational writes, review read access and retention, install request limits, and disable lab fault injection outside the approved demonstration environment.
+
+## Simulated FDA import
+
+Use the disposable local environment described in the README. Generate a separate credential with `openssl rand -hex 32` and set `LAB_FDA_SOURCE_TOKEN` in the local `.env`. Default scope is `tenant-001` and `source-001`. Run migrations and start the API before publishing. The independent publisher uses HTTP on the local machine. Set `LAB_FDA_PUBLISHER_ORIGIN` if the API uses a different loopback port.
+
+```sh
+npm run fda:publish
+npm run fda:publish -- duplicate-replay record-001
+npm run fda:publish -- conflicting-replay
+npm run fda:publish -- permission-degradation
+npm run fda:publish -- reporting-interruption
+npm run fda:publish -- delayed-delivery
+npm run fda:publish -- recovery
+npm run fda:publish -- invalid-contract
+npm run fda:publish -- tenant-violation
+```
+
+Open FDA Integration and select **Refresh ingestion** after publishing. Select a receipt to inspect validation, timestamps, revisions and the canonical reference. Follow the receipt to the imported source dataset in Agent Health or Workflow Evidence. For local machine-readable inspection, read `/api/integrations/fda/v1/receipts/<id>` on the API loopback origin.
+
+For a clean rerun, use a new disposable database and local `DATABASE_URL`, then run `npm run db:migrate`. Use the existing seed command if you also need legacy fixtures. Confirm the database identity before removing any explicitly disposable environment. The publisher never resets the database. An identical replay of an interrupted delivery can resume processing. The gateway stops after three failed projection attempts and retains the event and prior receipts.

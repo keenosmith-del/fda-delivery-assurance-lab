@@ -15,8 +15,12 @@ import { evidenceDownload, sourceRevision } from './evidence.ts';
 import type { ExportContext } from './evidence.ts';
 import { queueStatus } from '../workers/telemetry.ts';
 
+import { registerFdaIngestion } from './fda-ingestion.ts';
+import type { FdaSourceConfig } from './fda-ingestion.ts';
+
 interface Options {
   pool: Database;
+  fdaSource?: FdaSourceConfig;
   writeToken?: string;
   enableFaults?: boolean;
   logger?: boolean;
@@ -27,7 +31,7 @@ interface Options {
   checkSchema?: () => Promise<boolean>;
 }
 
-export function createApp({ pool, writeToken, enableFaults, logger = false, access, uiDir, checkSchema, environment = 'local', revision }: Options) {
+export function createApp({ pool, writeToken, enableFaults, logger = false, access, uiDir, checkSchema, environment = 'local', revision, fdaSource }: Options) {
   const app = Fastify({ logger, genReqId: () => randomUUID(), requestIdHeader: false, requestTimeout: 12_000, bodyLimit: 4096, logController: new LogController({ disableRequestLogging: true }) });
   const digest = (value: string) => createHash('sha256').update(value).digest();
   const expectedToken = writeToken ? digest(writeToken) : null;
@@ -136,6 +140,7 @@ export function createApp({ pool, writeToken, enableFaults, logger = false, acce
 
   app.get('/api/ops/status', async () => ({ ...(await queueStatus(pool)), requests: { ...requestCounts } }));
   if (uiDir) registerWeb(app, uiDir);
+  registerFdaIngestion(app, pool, fdaSource, exportContext.revision);
   registerIntelligence(app, pool, canWrite, actor, exportContext);
   registerMeasurement(app, pool, canWrite, actor, exportContext);
   return app;

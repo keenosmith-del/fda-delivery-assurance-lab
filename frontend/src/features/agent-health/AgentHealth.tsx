@@ -10,7 +10,7 @@ export function AgentHealth() {
   const details = useResource(active ? `/api/agent-health/${active}` : null, deviceDetail);
   const device = details.data;
   return <>
-    <section className="heading"><h1>Agent Health</h1><p>Review synthetic endpoint reporting, permissions and gaps in the observation window.</p></section>
+    <section className="heading"><h1>Agent Health</h1><p>Review synthetic endpoint reporting, permissions and gaps in the observation window. <a href="#agent-health?dataset=fda">View simulated FDA records</a></p></section>
     {health.error ? <p role="alert">{health.error} <button className="secondary" onClick={health.retry}>Retry</button></p>
       : !health.data ? <p role="status">Loading coverage…</p> : <>
         <div className="panel coverage-summary">

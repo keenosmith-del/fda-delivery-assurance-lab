@@ -8,7 +8,7 @@ import { migrate } from '../../backend/src/db/migrations.ts';
 
 const migrations = fileURLToPath(new URL('../../database/migrations/', import.meta.url));
 
-export async function openTestDatabase(): Promise<{ pool: Database; close: () => Promise<void>; connectionString: string | null }> {
+export async function openTestDatabase(directory = migrations): Promise<{ pool: Database; close: () => Promise<void>; connectionString: string | null }> {
   const nativeUrl = process.env.TEST_DATABASE_URL;
   if (nativeUrl) {
     const schema = `test_${randomUUID().replaceAll('-', '')}`;
@@ -27,7 +27,7 @@ export async function openTestDatabase(): Promise<{ pool: Database; close: () =>
     }
     try {
       await admin.query(`CREATE SCHEMA ${schema}`);
-      await migrate(pool, migrations);
+      await migrate(pool, directory);
       return { pool, close, connectionString };
     } catch (error) {
       await close();
@@ -62,7 +62,7 @@ export async function openTestDatabase(): Promise<{ pool: Database; close: () =>
   };
 
   try {
-    await migrate(pool, migrations);
+    await migrate(pool, directory);
     return { pool, close: () => db.close(), connectionString: null };
   } catch (error) {
     await db.close();
