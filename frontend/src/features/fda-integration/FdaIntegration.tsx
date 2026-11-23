@@ -1,3 +1,4 @@
+import { PageHeader, Metrics, Metric, SegmentLinks } from '../../components/Workspace.tsx';
 import { WorkflowAssessment } from '../workflow-evidence/WorkflowAssessment.tsx';
 import { z } from 'zod';
 import { workflowAssurance } from '../../../../shared/contracts/agent-assurance.ts';
@@ -21,32 +22,31 @@ export function FdaIntegration({ receiptId }: { receiptId?: string }) {
   const receipt = detail.data;
   const data = status.data;
   return <>
-    <section className="heading"><h1>FDA Integration</h1><p>Inspect simulated FDA data ingestion, source validation and operational evidence.</p></section>
+    <PageHeader title="FDA Integration" summary="Inspect simulated FDA data ingestion, source validation and operational evidence." />
     {status.error && <p role="alert">{status.error} <button className="secondary" onClick={status.retry}>Retry</button></p>}
     {!data && !status.error && <p role="status">Loading ingestion status…</p>}
     {data && <>
-      <section className="panel">
-        <h2>Synthetic source</h2>
+      <section className="panel source-overview">
+        <div className="result-heading"><h2>Synthetic source</h2>
+          <button className="secondary" type="button" onClick={() => { status.refresh(); detail.refresh(); }}>Refresh ingestion</button>
+        </div>
         <dl><dt>Connection</dt><dd>{data.connection}</dd>
           <dt>Scope</dt><dd>{data.tenantId} / {data.sourceId}</dd>
           <dt>Contract</dt><dd>{data.schemaVersion}</dd>
           <dt>Status</dt><dd>{data.sourceStatus === 'active' ? 'Records received' : data.sourceStatus === 'disabled' ? 'Source ingestion disabled' : 'Awaiting import'}</dd>
           <dt>Last successful ingestion</dt><dd>{data.lastSuccessful ? dateLabel(data.lastSuccessful) : 'None'}</dd>
-          <dt>Accepted records</dt><dd>{data.acceptedRecords}</dd>
-          <dt>Duplicates</dt><dd>{data.counts.duplicate}</dd>
-          <dt>Rejected records</dt><dd>{data.counts.rejected}</dd>
-          <dt>Conflicts</dt><dd>{data.counts.conflict}</dd>
-          <dt>Processing failures</dt><dd>{data.counts.processing_failed}</dd>
         </dl>
+        <Metrics><Metric label="Accepted records" value={data.acceptedRecords} /><Metric label="Duplicates" value={data.counts.duplicate} />
+          <Metric label="Rejected records" value={data.counts.rejected} /><Metric label="Conflicts" value={data.counts.conflict} />
+          <Metric label="Processing failures" value={data.counts.processing_failed} /></Metrics>
         <details><summary>Supported record categories</summary><ul>{data.categories.map(category => <li key={category}>{category}</li>)}</ul></details>
-        <button className="secondary" type="button" onClick={() => { status.refresh(); detail.refresh(); }}>Refresh ingestion</button>
       </section>
       <div className="panels">
         <section className="panel"><h2>Latest ingestion receipts</h2>
-          {data.receipts.length === 0 ? <p>No deliveries recorded.</p> : <ul className="history">{data.receipts.map(item => (
+          {data.receipts.length === 0 ? <p>No deliveries recorded.</p> : <ul className="record-list activity-list">{data.receipts.map(item => (
             <li key={item.id}><a aria-current={item.id === current ? 'true' : undefined} href={`#fda-integration?receipt=${item.id}`}>
               {item.sourceRecordId ?? 'Unidentified record'} · {item.status.replaceAll('_', ' ')}
-            </a><small>{dateLabel(item.receivedAt)}</small></li>
+              <small>{dateLabel(item.receivedAt)}</small></a></li>
           ))}</ul>}
         </section>
         <section className="panel"><h2>Receipt details</h2>
@@ -92,7 +92,7 @@ export function ImportedAgentHealth({ receiptId, incidentId, windowId }: { recei
   const health = resource.data;
   const focused = health?.devices.find(device => device.receipts.some(receipt => receipt.id === receiptId));
   return <>
-    <section className="heading"><h1>Agent Health</h1><p>Simulated FDA publisher · <a href="#agent-health">View legacy fixtures</a></p></section>
+    <PageHeader title="Agent Health" summary="Review reporting, coverage and permissions from the simulated FDA publisher." actions={<SegmentLinks label="Agent datasets"><a href="#agent-health">View legacy fixtures</a><a href="#agent-health?dataset=fda" aria-current="page">FDA source</a></SegmentLinks>} />
     {resource.error && <p role="alert">{resource.error} <button className="secondary" onClick={resource.retry}>Retry</button></p>}
     {!health && !resource.error && <p role="status">Loading imported health…</p>}
     {health && <section className="panel">
@@ -129,11 +129,18 @@ export function ImportedWorkflowEvidence({ receiptId, workflowId }: { receiptId?
   const resource = useResource(`${FDA_GATEWAY}/workflow-evidence`, fdaWorkflowProjection);
   const readiness = useResource(`${FDA_GATEWAY}/assurance/workflow-readiness`, workflowAssurance);
   return <>
-    <section className="heading"><h1>Workflow Evidence</h1><p>Simulated FDA publisher · <a href="#discover">View legacy fixtures</a> · <a href={'#investigations' + (workflowId ? `?workflow=${workflowId}` : '')}>Evidence Investigation</a></p></section>
+    <PageHeader title="Workflow Evidence" summary="Trace imported candidates to observations, engineering decisions and delivery cases." actions={<SegmentLinks label="Workflow datasets">
+      <a href="#discover">View legacy fixtures</a><a href="#discover?dataset=fda" aria-current="page">FDA source</a>
+    </SegmentLinks>} />
     {resource.error && <p role="alert">{resource.error} <button className="secondary" onClick={resource.retry}>Retry</button></p>}
     {!resource.data && !resource.error && <p role="status">Loading imported workflows…</p>}
     {resource.data?.length === 0 && <p>No workflow candidates received.</p>}
-    {resource.data?.map(item => <details className="panel" key={item.candidate.workflowId}
+    <div className="panels workflow-browser">
+    {resource.data && resource.data.length > 0 && <section className="panel"><h2>Workflow candidates</h2><ul className="record-list">
+      {resource.data.map(item => <li key={item.candidate.workflowId}><a aria-current={workflowId === item.candidate.workflowId ? 'true' : undefined}
+        href={`#discover?dataset=fda&workflow=${item.candidate.workflowId}`}>{item.candidate.workflowId}<small>{item.candidate.category.replaceAll('-', ' ')}</small></a></li>)}
+    </ul><a className="export-link" href={'#investigations' + (workflowId ? `?workflow=${workflowId}` : '')}>Evidence Investigation</a></section>}
+    <div className="workflow-records">{resource.data?.map(item => <details className="panel" key={item.candidate.workflowId}
       open={workflowId ? workflowId === item.candidate.workflowId : !receiptId || item.receipts.some(receipt => receipt.id === receiptId) || item.observations.some(o => o.receipt.id === receiptId) || undefined}>
       <summary>{item.candidate.workflowId} · {item.candidate.category}</summary>
       <p>Source estimate {item.candidate.frequency} {item.candidate.unit.replaceAll('-', ' ')}. Source recommendation {item.candidate.recommendation.replaceAll('-', ' ')}.</p>
@@ -154,6 +161,6 @@ export function ImportedWorkflowEvidence({ receiptId, workflowId }: { receiptId?
       </section>)}
       <h3>Candidate and window provenance</h3><ReceiptLinks records={item.receipts} />
       <WorkflowAssessment workflowId={item.candidate.workflowId} />
-    </details>)}
+    </details>)}</div></div>
   </>;
 }

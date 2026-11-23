@@ -1,3 +1,4 @@
+import { PageHeader } from '../../components/Workspace.tsx';
 import { useRef, useState } from 'react';
 import { Comparison } from './Comparison.tsx';
 import type { FormEvent } from 'react';
@@ -59,12 +60,8 @@ export function Reliability() {
 
   return (
     <>
-      <section className="heading" aria-labelledby="title">
-        <p className="section-label">Operations workspace</p>
-        <h1 id="title">ATS Reliability</h1>
-        <p>Run a synthetic candidate submission and trace its recovery from request to database confirmation.</p>
-      </section>
-      <div className="panels">
+      <PageHeader title="ATS Reliability" summary="Run a synthetic candidate submission and trace its recovery from request to database confirmation." />
+      <div className="panels reliability-panels">
         <section className="panel" aria-labelledby="scenario-title">
           <h2 id="scenario-title">Scenario runner</h2>
           <form onSubmit={start}>
@@ -108,7 +105,7 @@ export function Reliability() {
                 <dd>{scenarioLabels[attempt.scenario]}</dd>
               </dl>
               <h3>Request and recovery</h3>
-              <ol className="trace">
+              <ol className="trace operation-timeline">
                 {steps.map((step, index) => <li key={index}><span>{step.action}</span><small>{step.result}</small></li>)}
               </ol>
             </>

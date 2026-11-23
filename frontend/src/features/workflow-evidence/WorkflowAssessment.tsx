@@ -74,7 +74,7 @@ export function WorkflowAssessment({ workflowId }: { workflowId: string }) {
   const decision = item?.decisions.find(d => d.revision === current?.revision);
   const hasDelivery = item?.deliveryCases.some(d => d.revision === current?.revision);
   const revise = (body: Record<string, unknown>) => current && void send('/revisions', { ...body, revision: current.revision });
-  return <section>
+  return <section className="domain-section assessment-section">
     <h3>Engineering assessment</h3>
     <details><summary>Local operator access</summary>
       <label>Workflow operator token<input type="password" autoComplete="off" value={token} onChange={event => setToken(event.target.value)} /></label>
@@ -86,7 +86,7 @@ export function WorkflowAssessment({ workflowId }: { workflowId: string }) {
       <p>Revision {current.revision} · {human(current.stage)} · Responsible role {item.responsibleRole}</p>
       <p>Reviewed evidence {human(current.snapshot.readiness.readiness)} · {current.snapshot.readiness.ruleVersion}</p>
       {item.stale && <p role="alert">Source evidence has changed since this revision. Reassess before authorising a new delivery case.</p>}
-      <button type="button" onClick={() => { setError(''); refreshWith(n => n + 1); }}>Refresh assessment</button>
+      <button className="secondary" type="button" onClick={() => { setError(''); refreshWith(n => n + 1); }}>Refresh assessment</button>
       <details><summary>Reassess supporting evidence</summary>
         <form onSubmit={submit(data => revise({ action: 'reassess', reason: value(data, 'reason') }))}>
           <Note name="reason" label="Reason for reassessment" /><button disabled={busy}>Create reassessment revision</button>
@@ -134,7 +134,7 @@ export function WorkflowAssessment({ workflowId }: { workflowId: string }) {
       {item.decisions.length === 0 ? <p>No decision recorded.</p> : <ul>{item.decisions.map(d => <li key={d.id}>
         Revision {d.revision} · {decisionLabels[d.outcome]} · {d.actorRole} · {dateLabel(d.decidedAt)}<p>{d.justification}</p>
       </li>)}</ul>}
-      {item.deliveryCases.map(d => <details key={d.id} open><summary>Delivery case · {human(d.readiness)}</summary>
+      {item.deliveryCases.map(d => <details className="delivery-record" key={d.id} open><summary>Delivery case · {human(d.readiness)}</summary>
         <p>Case {d.id} · Decision {d.decisionId} · Assessment revision {d.revision}</p>
         <dl>
           <dt>Scope</dt><dd>{d.plan.understanding.objective}</dd>
@@ -164,7 +164,7 @@ export function WorkflowAssessment({ workflowId }: { workflowId: string }) {
         </details>)}
         <ol>{item.audit.map((a, i) => <li key={i}>{dateLabel(a.recordedAt)} · {a.actorRole} · {human(a.action)} · revision {a.revision} · {a.reason}</li>)}</ol>
       </details>
-      <a href={path + '/export'} download>Download workflow assessment JSON</a>
+      <a className="export-link" href={path + '/export'} download>Download workflow assessment JSON</a>
     </>}
   </section>;
 }

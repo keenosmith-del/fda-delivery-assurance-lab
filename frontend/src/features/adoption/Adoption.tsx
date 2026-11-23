@@ -1,3 +1,4 @@
+import { PageHeader, SegmentLinks } from '../../components/Workspace.tsx';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { z } from 'zod';
@@ -171,7 +172,7 @@ function AdoptionWorkspace({ id }: { id: string }) {
 
 export function Adoption() {
   return <>
-    <section className="heading"><h1>Adoption Diagnostics</h1><p>Investigate automation usage, record an intervention and compare follow-up measurements.</p><a href="#adoption?dataset=fda">FDA-linked Adoption Assurance</a></section>
+    <PageHeader title="Adoption Diagnostics" summary="Investigate automation usage, record an intervention and compare follow-up measurements." actions={<SegmentLinks label="Adoption datasets"><a href="#adoption" aria-current="page">Legacy fixtures</a><a href="#adoption?dataset=fda">FDA-linked Adoption Assurance</a></SegmentLinks>} />
     <AutomationPicker>{id => <AdoptionWorkspace key={id} id={id} />}</AutomationPicker>
   </>;
 }

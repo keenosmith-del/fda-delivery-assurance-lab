@@ -1,3 +1,4 @@
+import { Metrics, Metric } from '../../components/Workspace.tsx';
 import { useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
 import { z } from 'zod';
@@ -187,7 +188,7 @@ export function AgentAssurancePanel({ incidentId, selectedWindow }: { incidentId
       setBusy(false);
     }
   }
-  return <section className="panel">
+  return <section className="panel agent-assurance">
     <h2>Agent operational assurance</h2>
     <p>Source-backed assessment and incident decisions for synthetic endpoints.</p>
     <details><summary>Local operator access</summary><label>Operator token <input type="password" autoComplete="off"
@@ -201,8 +202,9 @@ export function AgentAssurancePanel({ incidentId, selectedWindow }: { incidentId
     {!data && !assessment.error && <p role="status">Loading operational assessment…</p>}
     {data && <><p>{data.window?.windowId ?? 'No observation window'} · as of {time(data.asOf)} · {data.ruleVersion}</p>
       <p>Last canonical receipt {time(data.lastReceipt)}</p>
-      <dl><dt>Eligible</dt><dd>{data.counts.eligible}</dd><dt>Registered</dt><dd>{data.counts.registered}</dd>
-        <dt>Reporting</dt><dd>{data.counts.reporting}</dd><dt>Observed</dt><dd>{data.counts.observed}</dd>
+      <Metrics><Metric label="Eligible" value={data.counts.eligible} /><Metric label="Registered" value={data.counts.registered} />
+        <Metric label="Reporting" value={data.counts.reporting} /><Metric label="Observed" value={data.counts.observed} /></Metrics>
+      <dl>
         <dt>Screen permission granted</dt><dd>{data.counts.permissionGranted}</dd>
         <dt>Complete evidence</dt><dd>{data.counts.complete}</dd><dt>Degraded or unavailable</dt><dd>{data.counts.degraded}</dd>
         <dt>Delayed observations</dt><dd>{data.counts.delayed}</dd>

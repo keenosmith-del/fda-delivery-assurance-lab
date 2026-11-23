@@ -1,3 +1,4 @@
+import { PageHeader, TableRegion, SegmentLinks } from '../../components/Workspace.tsx';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { z } from 'zod';
@@ -64,26 +65,26 @@ function DeliveryWorkspace({ caseId }: { caseId: string }) {
   if (!data) return <p role="status">Loading FDA-linked adoption evidence…</p>;
   const diagnoses = data.audit.filter(a => a.body.kind === 'diagnose');
   const plans = data.audit.filter(a => a.body.kind === 'plan');
-  return <section className="panel">
+  return <section className="panel adoption-case">
     <h2>FDA-linked Adoption Assurance</h2>
     <p>{data.workflowId} · delivery case {caseId} · approval revision {data.revision}</p>
-    <nav aria-label="Delivery evidence">
-      <a href="#fda-integration">FDA Integration</a>{' · '}
-      <a href={`#outcomes?dataset=fda&case=${caseId}`}>FDA-linked Outcome Assurance</a>{' · '}
-      <a href={`#investigations?category=adoption-usage&case=${caseId}`}>Evidence Investigation</a>{' · '}
-      <a href="#agent-health?dataset=fda">Agent Health</a>{' · '}
+    <SegmentLinks label="Delivery evidence">
+      <a href="#fda-integration">FDA Integration</a>
+      <a href={`#outcomes?dataset=fda&case=${caseId}`}>FDA-linked Outcome Assurance</a>
+      <a href={`#investigations?category=adoption-usage&case=${caseId}`}>Evidence Investigation</a>
+      <a href="#agent-health?dataset=fda">Agent Health</a>
       <a href={`#discover?dataset=fda&workflow=${data.workflowId}`}>Workflow Evidence and delivery case</a>
-    </nav>
+    </SegmentLinks>
     <p role="status">Adoption state · {human(data.status)}</p>
     <p>Engineering decision {data.decisionId} · {data.operation?.effectId ? 'Downstream effect independently verified' : 'Implementation verification pending'}</p>
     {data.operation && <a href={DOWNSTREAM_API + '/operations/' + data.operation.id + '/export'}>Downstream operation evidence</a>}
     {data.discrepancies.map(item => <p key={item}>{item}</p>)}
     {!data.windows.length && <p>Adoption unknown. A declared cohort and usage observations are required.</p>}
-    {data.windows.map(w => <article key={w.periodId}>
+    {data.windows.map(w => <article className="domain-section" key={w.periodId}>
       <h3>{w.periodId} · {w.coverage}</h3>
-      <table><thead><tr><th scope="col">Measure</th><th scope="col">Count</th><th scope="col">Rate</th></tr></thead>
+      <TableRegion label={`Measures for ${w.periodId}`}><table><thead><tr><th scope="col">Measure</th><th scope="col">Count</th><th scope="col">Rate</th></tr></thead>
         <tbody>{Object.entries(w.rates).map(([name, metric]) => <tr key={name}><th scope="row">{labelFor(name)}</th>
-          <td>{metric.numerator} / {metric.denominator ?? 'unknown'}</td><td>{percent(metric.value)}</td></tr>)}</tbody></table>
+          <td>{metric.numerator} / {metric.denominator ?? 'unknown'}</td><td>{percent(metric.value)}</td></tr>)}</tbody></table></TableRegion>
       <p>{w.cohort.length} observed eligible participants · {w.adopters.length} distinct adopters · {w.observedOpportunities} observed opportunities</p>
       <p>{w.verified} verified successes · {w.reportedSuccess} source-reported successes · {w.failed} reported failures · {w.inconclusive} inconclusive · {w.exceptionCount} observed exceptions · {w.handoffs} human handoffs</p>
       {w.missing.map(item => <p key={item}>{item}</p>)}
@@ -147,11 +148,9 @@ function Field({ name, label }: { name: string; label: string }) {
 export function DeliveryAdoption({ caseId }: { caseId?: string }) {
   const cases = useResource(ADOPTION_ASSURANCE + '/cases', choices);
   return <>
-    <section className="heading"><h1>Adoption Diagnostics</h1><p>FDA-linked synthetic usage and intervention evidence.</p>
-      <a href="#adoption">Legacy synthetic measurements</a>
-    </section>
+    <PageHeader title="Adoption Diagnostics" summary="Inspect FDA-linked synthetic usage and intervention evidence." actions={<SegmentLinks label="Adoption datasets"><a href="#adoption">Legacy synthetic measurements</a><a href="#adoption?dataset=fda" aria-current="page">FDA-linked cases</a></SegmentLinks>} />
     {cases.error && <p role="alert">{cases.error}</p>}
-    {!caseId && (cases.data ? cases.data.length ? <ul>{cases.data.map(item => <li key={item.caseId}>
+    {!caseId && (cases.data ? cases.data.length ? <ul className="record-list case-picker">{cases.data.map(item => <li key={item.caseId}>
       <a href={`#adoption?dataset=fda&case=${item.caseId}`}>{item.workflowId} · {item.caseId}</a>
     </li>)}</ul> : <p>No approved delivery cases have been recorded.</p> : <p role="status">Loading delivery cases…</p>)}
     {caseId && <DeliveryWorkspace key={caseId} caseId={caseId} />}

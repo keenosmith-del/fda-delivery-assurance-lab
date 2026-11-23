@@ -1,3 +1,4 @@
+import { PageHeader, SegmentLinks } from '../../components/Workspace.tsx';
 import { useState } from 'react';
 import { z } from 'zod';
 import { opportunityModel, outcome, period } from '../../../../shared/contracts/measurement.ts';
@@ -95,8 +96,7 @@ function OutcomeWorkspace({ id }: { id: string }) {
 export function Outcomes() {
   const model = useResource('/api/outcomes/model', opportunityModel);
   return <>
-    <section className="heading"><h1>Outcome Verification</h1><p>Compare observed work, modeled benefits and reviewed synthetic measurements.</p>
-      <a href="#outcomes?dataset=fda">FDA-linked Outcome Assurance</a></section>
+    <PageHeader title="Outcome Verification" summary="Compare observed work, modeled benefits and reviewed synthetic measurements." actions={<SegmentLinks label="Outcome datasets"><a href="#outcomes" aria-current="page">Legacy fixtures</a><a href="#outcomes?dataset=fda">FDA-linked Outcome Assurance</a></SegmentLinks>} />
     <section className="panel coverage-summary">
       <h2>Modeled weekly opportunity</h2>
       {model.error ? <p role="alert">{model.error} <button className="secondary" onClick={model.retry}>Retry</button></p>
