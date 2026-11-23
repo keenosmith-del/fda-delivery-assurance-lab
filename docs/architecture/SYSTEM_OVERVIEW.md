@@ -73,3 +73,7 @@ The local API authorises one synthetic execution per approved delivery case. Mig
 ## Delivery adoption assurance
 
 Migration 010 adds scoped adoption assessments, usage observations, receipts and an append-only action history. Historical measurements remain linked to their original engineering decision and delivery case. The Adoption Diagnostics workspace exposes the FDA-linked dataset separately from the legacy fixtures.
+
+## Delivery outcome assurance
+
+The outcome layer follows the approved delivery case through independent operation verification, scoped adoption evidence and an explicitly aligned synthetic time study. A versioned ruleset evaluates effort and workload comparability. PostgreSQL stores source observations, receipts and append-only operator review revisions. The standalone outcome examples continue to use their own fixtures.

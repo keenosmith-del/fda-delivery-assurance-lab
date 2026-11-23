@@ -69,6 +69,7 @@ function DeliveryWorkspace({ caseId }: { caseId: string }) {
     <p>{data.workflowId} · delivery case {caseId} · approval revision {data.revision}</p>
     <nav aria-label="Delivery evidence">
       <a href="#fda-integration">FDA Integration</a>{' · '}
+      <a href={`#outcomes?dataset=fda&case=${caseId}`}>FDA-linked Outcome Assurance</a>{' · '}
       <a href="#agent-health?dataset=fda">Agent Health</a>{' · '}
       <a href={`#discover?dataset=fda&workflow=${data.workflowId}`}>Workflow Evidence and delivery case</a>
     </nav>

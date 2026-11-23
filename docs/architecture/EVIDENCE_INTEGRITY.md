@@ -67,3 +67,7 @@ The execution record retains the exact approval revision and source fingerprint 
 ## Delivery-linked usage evidence
 
 Adoption exports distinguish the authoritative operation, separately published synthetic activity, calculated metrics and operator-authored interpretations. They retain source event and receipt identities, numerator and denominator evidence, and the snapshots used for recorded follow-up comparisons. The same operation is counted at most once.
+
+## FDA-linked outcome evidence
+
+A delivery-linked outcome export includes the immutable approval snapshot, the independently verified operation reference, adoption and intervention observations, time-study declarations and rows, model assumptions, formulas and review snapshots. Occurrence time controls period membership and receipt time preserves ingestion chronology. Fingerprints cover the selected study and adoption inputs, implementation and linked intervention. A materially changed input makes the corresponding review stale. The [iteration record](../iterations/ITERATION_20_END_TO_END_OUTCOME_ASSURANCE.md) documents the formulas and example results.

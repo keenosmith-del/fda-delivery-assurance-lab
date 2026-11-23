@@ -136,3 +136,9 @@ For the acceptance fault, start the simulator with `LAB_MODE=test LAB_DOWNSTREAM
 ## Publish synthetic adoption observations
 
 Use the local adoption publisher with the same scoped lab credential as FDA-shaped ingestion. Obtain case ID, workflow ID, operation ID and verification time from a verified delivery, then run `npm run adoption:publish -- CASE_ID WORKFLOW_ID OPERATION_ID VERIFIED_AT baseline`. See Iteration 19 for follow-up periods and expected comparisons.
+
+## Synthetic outcome time study
+
+Reuse the configured scoped FDA publisher token and a loopback API. Retrieve the approved case ID, workflow ID and ISO operation verification timestamp from its delivery-linked evidence. Run `npm run outcome:publish -- CASE_ID WORKFLOW_ID VERIFIED_AT model`, then repeat with `baseline` and `comparison`. Use the corresponding adoption periods from the [connected demonstration](../iterations/ITERATION_20_END_TO_END_OUTCOME_ASSURANCE.md#reproduce-the-connected-demonstration).
+
+Open **FDA-linked Outcome Assurance**, check the selected periods and evidence gaps, record a justified review with the workspace operator access, and download the evidence package. The application export references the independent simulator effect. The simulator's own effect store has a separate persistence lifecycle.

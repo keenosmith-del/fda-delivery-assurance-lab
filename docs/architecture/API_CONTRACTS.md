@@ -130,3 +130,11 @@ The dedicated loopback simulator accepts `POST /synthetic-downstream/v1/effects`
 ## Delivery adoption assurance
 
 `/api/integrations/fda/v1/adoption-assurance` provides case listing, detail and evidence exports at `GET /cases`, `GET /cases/:id` and `GET /cases/:id/export`. Operators establish assessments with `POST /cases/:id` and submit sequenced actions with `POST /cases/:id/actions`. The scoped lab source posts the versioned observation contract to `POST /observations`. Accepted, replayed and conflicting source events return 201, 200 and 409 respectively.
+
+## Delivery outcome assurance
+
+Use `/api/integrations/fda/v1/outcome-assurance`. `GET /cases` lists scoped delivery cases. `POST /cases/:id` registers an assessment. `GET /cases/:id` returns readiness, observation periods, linked usage, calculations and review history. An optional query selects `baseline`, `comparison`, `method` and `interventionId`. The same query applies to the complete `GET /cases/:id/export` JSON download.
+
+`POST /measurements` accepts strict `fda-lab.outcome-measurement/v1` period, effort and model events using the configured synthetic source credential. Accepted submissions return 201, exact replay returns 200 and conflicting replay returns 409. Source submissions require the configured tenant and source, and browser-origin submissions are rejected.
+
+`POST /cases/:id/reviews` requires operator access, the selected periods and method, a request UUID, the current evidence fingerprint and the expected latest revision. The service recalculates eligibility and appends the review and snapshot atomically. A changed fingerprint or revision returns 409. Viewer access permits inspection and export through the workspace controls.

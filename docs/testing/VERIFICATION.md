@@ -65,3 +65,7 @@ Run `npx vitest run backend/tests/downstream.test.ts` for the disposable databas
 ## Delivery adoption assurance
 
 The adoption backend suite checks a populated migration, source access, replay, provenance, retry deduplication and follow-up lifecycle. The standard browser suite extends the verified delivery case through diagnosis, intervention and export. CI exports the linked adoption package and verifies adoption data after PostgreSQL backup and restore.
+
+## Delivery outcome assurance
+
+The adoption and outcome integration tests exercise the populated migration upgrade, source scope, measurement replay, operator review concurrency, matched and normalised calculations, negative and zero outcomes, stale snapshots and restart persistence. The connected Chromium journey exercises modeled-only evidence, negative handling effort, operator review, export and stale-review display. The CI evidence runner publishes scenario JSON and the PostgreSQL restore job reads both databases to verify the same reviewed calculation, fingerprint and history. The image check imports the outcome API and verifies its compiled contracts, service and migration.

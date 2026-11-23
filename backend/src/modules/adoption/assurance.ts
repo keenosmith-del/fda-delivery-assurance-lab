@@ -13,7 +13,7 @@ export class AssuranceError extends Error {
   constructor(message: string, status: number) { super(message); this.status = status; }
 }
 
-async function lookup(client: SqlClient, scope: AdoptionScope, caseId: string, lock = false) {
+export async function lookupDelivery(client: SqlClient, scope: AdoptionScope, caseId: string, lock = false) {
   const { rows } = await client.query<{ caseId: string; workflowId: string; assessmentId: string; revision: number;
     decisionId: string; operation: VerifiedEffect | null; superseded: boolean; available: boolean }>(`
     SELECT c.id AS "caseId", a.workflow_id AS "workflowId", c.assessment_id AS "assessmentId", c.revision,
@@ -31,7 +31,7 @@ async function lookup(client: SqlClient, scope: AdoptionScope, caseId: string, l
   return rows[0];
 }
 
-async function establish(client: SqlClient, scope: AdoptionScope, delivery: Awaited<ReturnType<typeof lookup>>) {
+async function establish(client: SqlClient, scope: AdoptionScope, delivery: Awaited<ReturnType<typeof lookupDelivery>>) {
   await client.query(`INSERT INTO fda_adoption_assessments
     (tenant_id,source_id,delivery_case_id,assessment_id,revision,decision_id) VALUES ($1,$2,$3,$4,$5,$6)
     ON CONFLICT (delivery_case_id) DO NOTHING`, [scope.tenantId, scope.sourceId, delivery.caseId,
@@ -40,7 +40,7 @@ async function establish(client: SqlClient, scope: AdoptionScope, delivery: Awai
 
 export function establishAssurance(db: Database, scope: AdoptionScope, caseId: string) {
   return transaction(db, async client => {
-    const delivery = await lookup(client, scope, caseId, true);
+    const delivery = await lookupDelivery(client, scope, caseId, true);
     await establish(client, scope, delivery);
     return { id: caseId };
   });
@@ -49,7 +49,7 @@ export function establishAssurance(db: Database, scope: AdoptionScope, caseId: s
 export function receiveObservation(db: Database, scope: AdoptionScope, input: Observation) {
   if (input.tenantId !== scope.tenantId || input.sourceId !== scope.sourceId) throw new AssuranceError('SOURCE_SCOPE_MISMATCH', 403);
   return transaction(db, async client => {
-    const delivery = await lookup(client, scope, input.caseId, true);
+    const delivery = await lookupDelivery(client, scope, input.caseId, true);
     if (delivery.workflowId !== input.workflowId) throw new AssuranceError('WORKFLOW_CASE_MISMATCH', 409);
     if (input.kind === 'result' && input.operationId && input.operationId !== delivery.operation?.id) {
       throw new AssuranceError('CROSS_CASE_OPERATION', 409);
@@ -84,7 +84,7 @@ export function receiveObservation(db: Database, scope: AdoptionScope, input: Ob
 type SavedAction = { id: string; body: AdoptionAction; evidence: unknown; actorRole: string;
   applicationRevision: string | null; recordedAt: string };
 
-async function assemble(client: SqlClient, scope: AdoptionScope, delivery: Awaited<ReturnType<typeof lookup>>) {
+async function assemble(client: SqlClient, scope: AdoptionScope, delivery: Awaited<ReturnType<typeof lookupDelivery>>) {
   const observations = (await client.query<{ body: Observation; receivedAt: string }>(
     'SELECT body, received_at AS "receivedAt" FROM fda_adoption_observations WHERE delivery_case_id=$1 ORDER BY period_id, source_event_id',
     [delivery.caseId])).rows;
@@ -113,8 +113,12 @@ async function assemble(client: SqlClient, scope: AdoptionScope, delivery: Await
 
 export type AssuranceDetail = Awaited<ReturnType<typeof assemble>>;
 
+export async function readDeliveryAdoption(client: SqlClient, scope: AdoptionScope, id: string, lock = false) {
+  return assemble(client, scope, await lookupDelivery(client, scope, id, lock));
+}
+
 export function readAssurance(db: Database, scope: AdoptionScope, id: string) {
-  return transaction(db, async client => assemble(client, scope, await lookup(client, scope, id)), true);
+  return transaction(db, client => readDeliveryAdoption(client, scope, id), true);
 }
 export function listAssurance(db: Database, scope: AdoptionScope) {
   return db.query<{ caseId: string; workflowId: string }>(`SELECT c.id AS "caseId",a.workflow_id AS "workflowId"
@@ -162,7 +166,7 @@ function validateAction(input: AdoptionAction, detail: AssuranceDetail) {
 
 export function recordAssuranceAction(db: Database, scope: AdoptionScope, id: string, input: AdoptionAction, actor: EvidenceActor) {
   return transaction(db, async client => {
-    const delivery = await lookup(client, scope, id, true);
+    const delivery = await lookupDelivery(client, scope, id, true);
     await establish(client, scope, delivery);
     const existing = await client.query<{ body: AdoptionAction }>('SELECT body FROM fda_adoption_actions WHERE delivery_case_id=$1 AND request_id=$2',
       [id, input.requestId]);

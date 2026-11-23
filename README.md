@@ -15,7 +15,7 @@ The lab shows how a synthetic FDA finding moves from ingestion and operational e
 
 ## Current implementation
 
-The gateway, independent publisher, incident verification, and workflow assessment and planning services persist to PostgreSQL. Approved delivery plans include prerequisites and can authorise local synthetic execution. The downstream worker records dispatch and verifies the effect through the simulator. The ATS example retains its separate confirmation flow. The adoption and outcome workspaces analyze their own synthetic measurement fixtures.
+The gateway, independent publisher, incident verification, and workflow assessment and planning services persist to PostgreSQL. Approved delivery plans include prerequisites and can authorise local synthetic execution. The downstream worker records dispatch and verifies the effect through the simulator. The ATS example retains its separate confirmation flow. The adoption and outcome workspaces link scoped synthetic observations to each approved delivery case. They also preserve the independent legacy fixtures.
 
 Use Node.js 24 and Docker Compose. From the project root:
 
@@ -81,3 +81,5 @@ See [Evidence integrity](docs/architecture/EVIDENCE_INTEGRITY.md) for the scorin
 The imported Agent Health view evaluates readiness, identifies source evidence gaps and lets operators record and verify incident interventions. Workflow Evidence shows the affected endpoint cohort and uses coverage and incident state for its engineering review gate. See the [operational assurance walkthrough](docs/operations/RUNBOOK.md#agent-operational-assurance).
 
 FDA-linked Adoption Assurance is available from a delivery case or the Adoption Diagnostics workspace. It joins synthetic usage observations to the originating engineering approval and treats verified delivery, source-reported activity and adoption as separate measures.
+
+FDA-linked Outcome Assurance connects verified delivery, adoption and human-reviewed synthetic handling measurements. Follow the [connected demonstration](docs/iterations/ITERATION_20_END_TO_END_OUTCOME_ASSURANCE.md#reproduce-the-connected-demonstration) to reproduce the time study, review and evidence export.
