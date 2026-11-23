@@ -1,3 +1,8 @@
+import { fixtureScope } from './fda-fixture.ts';
+import { publishScenario } from './publish-fda.ts';
+import { FDA_EVENTS } from '../shared/contracts/fda-ingestion.ts';
+import { WORKFLOW_ASSESSMENTS } from '../shared/contracts/workflow-assessments.ts';
+import { createFixtureDelivery } from '../tests/support/workflow-review.ts';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -11,7 +16,9 @@ import { openTestDatabase } from '../tests/support/database.ts';
 const directory = process.argv[2];
 assert(directory, 'Pass a new output directory.');
 const fixture = await openTestDatabase();
-const app = createApp({ pool: fixture.pool, enableFaults: true, environment: 'test', revision: process.env.LAB_SOURCE_REVISION });
+const sourceToken = randomUUID().replaceAll('-', '');
+const app = createApp({ pool: fixture.pool, enableFaults: true, environment: 'test', revision: process.env.LAB_SOURCE_REVISION,
+  fdaSource: { ...fixtureScope, token: sourceToken } });
 
 type Observation = { method: 'GET' | 'POST'; path: string; status: number; requestId: string | undefined };
 async function post(url: string, statusCode: number, payload: object, headers: Record<string, string> = {}, trace?: Observation[]) {
@@ -33,6 +40,16 @@ try {
   await seedIntelligence(fixture.pool);
   await seedMeasurement(fixture.pool);
   await mkdir(directory, { recursive: true });
+  for (const scenario of ['normal', 'assurance-complete-window']) {
+    await publishScenario(async event => {
+      const r = await app.inject({ method: 'POST', url: FDA_EVENTS, payload: event as object,
+        headers: { authorization: `Bearer ${sourceToken}` } });
+      return { status: r.statusCode, body: r.json() };
+    }, scenario);
+  }
+  const assessment = WORKFLOW_ASSESSMENTS + '/workflow-003';
+  await createFixtureDelivery((path, payload) => post(path, 200, payload), assessment);
+  await download(assessment + '/export', 'workflow-003-engineering-assessment.json');
   const task = '/api/workflow/tasks/offer-review';
   await post(task + '/reviews', 201, {
     classification: 'approve', suitability: 'reject', reason: 'Synthetic offer review requires human judgment.',

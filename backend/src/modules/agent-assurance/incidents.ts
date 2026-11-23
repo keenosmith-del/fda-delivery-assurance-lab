@@ -1,3 +1,4 @@
+import { lockFdaEvidence } from '../fda-ingestion/scope-lock.ts';
 import { randomUUID } from 'node:crypto';
 import { ASSURANCE_RULES, incidentDetail } from '../../../../shared/contracts/agent-assurance.ts';
 import type { openIncidentInput, IncidentSummary, IncidentCommand, AssuranceDevice } from '../../../../shared/contracts/agent-assurance.ts';
@@ -68,6 +69,7 @@ async function addAudit(db: SqlClient, scope: FdaScope, id: string, action: stri
 
 export async function openIncident(db: Database, scope: FdaScope, input: z.infer<typeof openIncidentInput>, actor: EvidenceActor) {
   return transaction(db, async client => {
+    await lockFdaEvidence(client, scope);
     const assessment = assess(await loadAssuranceRecords(client, scope), input);
     const endpoint = assessment?.devices.find(d => d.endpointId === input.endpointId);
     const condition = endpoint?.conditions.find(item => item.category === input.category);
@@ -109,6 +111,7 @@ const permitted = {
 
 export async function updateIncident(db: Database, scope: FdaScope, id: string, input: IncidentCommand, actor: EvidenceActor) {
   return transaction(db, async client => {
+    await lockFdaEvidence(client, scope);
     const incident = await getIncident(client, scope, id, true);
     const { state } = incident;
     if ((input.action === 'implement' && (state === 'awaiting_verification' || state === 'resolved')) ||

@@ -53,3 +53,7 @@ The local suite exercises historical assessment, non-truncated canonical reads, 
 - Local backend suite with disposable PGlite includes Milestone 08 tests and the existing regressions. The supported local checks also cover type-checking, production build, shell syntax and historical evidence exports.
 - The standard browser suite includes an operator journey that records and implements an intervention, verifies insufficient evidence, imports later evidence, resolves the case and downloads its export. The private suite retains its hosted access and regression checks.
 - Native PostgreSQL, Chromium execution, PostgreSQL backup/restore and Docker image verification run in GitHub Actions when local infrastructure is unavailable.
+
+## Milestone 09 workflow assessment
+
+The backend suite covers direct source-derived blockers without an incident, revision and approval races, workflow scope, actor roles, stale evidence, migration upgrades, rejected and deferred decisions, pilot planning, and idempotent cases. The Chromium suite uses real imported source records for feasibility and risk review, a planning decision, delivery, reload, export and stale evidence. The PostgreSQL backup exercise verifies workflow revision and receipt associations, a decision, case and audit history after restoration. CI also exports a scoped engineering assessment beside the previous evidence artifacts.

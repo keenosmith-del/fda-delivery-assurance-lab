@@ -246,6 +246,9 @@ export function WorkflowReadiness({ item, loaded, error }: {
       <h4><a href={`#agent-health?dataset=fda&window=${window.windowId}`}>{window.windowId}</a></h4>
       {window.affectedEndpoints.length > 0 && <p>Affected endpoints {window.affectedEndpoints.join(', ')}</p>}
       {window.gaps.map(gap => <p key={gap}>{gap}</p>)}
+      {window.blockers.map(blocker => <p key={blocker.endpointId + blocker.category}>
+        {blocker.endpointId} · {human(blocker.category)} · {blocker.reason}
+      </p>)}
       {window.missingIntervals.map(interval => <p key={interval.endpointId + interval.start}>
         {interval.endpointId} missing {time(interval.start)} to {time(interval.end)}
       </p>)}

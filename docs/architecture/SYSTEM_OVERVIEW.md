@@ -61,3 +61,7 @@ An independent Node publisher sends strictly typed synthetic events through the 
 ## Agent operational assurance
 
 The assurance layer reads scoped canonical source records with server receipt times and evaluates a selected observation window. Deterministic conditions can open cases whose original evidence is retained through examination, intervention and verification. New evidence must pass source chronology, receipt timing and category-specific rules before the case can resolve. Imported Workflow Evidence links the resulting operational conditions to independent cohort coverage and review readiness. See [Iteration 16](../iterations/ITERATION_16_AGENT_LIFECYCLE_ASSURANCE.md).
+
+## Workflow assessment and planning
+
+Imported Workflow Evidence combines independent agent readiness with a human review of a versioned evidence snapshot. The assessment service records feasibility, risk, qualitative suitability, decision provenance and a scoped delivery case. A material evidence change requires reassessment before a new case can be authorised. The gateway and the assessment write services serialize evidence-sensitive decisions per source. See [Iteration 17](../iterations/ITERATION_17_WORKFLOW_ASSESSMENT_AND_DECISIONS.md).

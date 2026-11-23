@@ -135,6 +135,10 @@ export function buildFixture(scope: FdaScope = fixtureScope) {
       event(91, 'workflow.candidate', '13:05', { workflowId: 'workflow-003', windowIds: ['window-003'],
         observationIds: ['observation-007'], category: 'periodic-reporting', frequency: 1, unit: 'per-window', recommendation: 'investigate' }),
     ],
+    workflowEvidenceChange: [event(92, 'workflow.observation', '12:57', {
+      observationId: 'observation-007', workflowId: 'workflow-003', endpointId: endpoint(6),
+      windowId: 'window-003', observedAt: time('12:53'), sequence: ['receive', 'validate', 'report'], durationSeconds: 95, exception: false,
+    })],
     invalid: { ...registrations[0], schemaVersion: 'fda-lab.ingestion/v99' },
     violation: { ...registrations[0], tenantId: scope.tenantId === 'tenant-999' ? 'tenant-998' : 'tenant-999' },
   };

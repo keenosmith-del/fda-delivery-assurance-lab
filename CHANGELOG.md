@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added auditable assessments, engineering decisions and delivery cases for imported FDA workflows.
+- Made operational evidence blockers independent of incident creation and added stale-evidence checks before approval and case creation.
+
 - Corrected Vite startup and browser selectors. Verified the existing release with PostgreSQL 17 and Chromium.
 - Added Adoption Diagnostics with persisted cohorts, first-use events, diagnostic decisions, interventions and follow-ups.
 - Added Outcome Verification with modeled opportunities, net estimates, compared synthetic time studies and evidence JSON exports.
