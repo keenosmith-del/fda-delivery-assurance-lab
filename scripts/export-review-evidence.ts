@@ -1,3 +1,5 @@
+import { ADOPTION_ASSURANCE, ADOPTION_OBSERVATIONS } from '../shared/contracts/adoption-assurance.ts';
+import { fixtureWindows } from './adoption-fixture.ts';
 import { DOWNSTREAM_API } from '../shared/contracts/downstream.ts';
 import { exerciseDownstreamEvidence } from './downstream-evidence-fixture.ts';
 import { fixtureScope } from './fda-fixture.ts';
@@ -55,6 +57,23 @@ try {
   const firstCase = (await app.inject(assessment)).json().deliveryCases[0].id;
   const lost = await exerciseDownstreamEvidence(fixture.pool, firstCase, 'lost-acknowledgment');
   await download(DOWNSTREAM_API + '/operations/' + lost.operation.id + '/export', 'downstream-lost-acknowledgment.json');
+  const adoptionFixture = fixtureWindows({ caseId: firstCase, workflowId: 'workflow-003', operationId: lost.operation.id,
+    verifiedAt: lost.operation.updated_at.toISOString(), sourceRevision: process.env.LAB_SOURCE_REVISION });
+  const actionUrl = ADOPTION_ASSURANCE + '/cases/' + firstCase + '/actions';
+  const diagnosis = randomUUID(), deliveryIntervention = randomUUID();
+  const reason = 'Reviewed the delivery-linked synthetic observations.';
+  for (const event of adoptionFixture.events('baseline')) await post(ADOPTION_OBSERVATIONS, 201, event, { authorization: 'Bearer ' + sourceToken });
+  await post(actionUrl, 200, { kind: 'diagnose', requestId: diagnosis, periodId: 'period-001', category: 'low-adoption',
+    reason, hypothesis: 'Onboarding steps may be unclear.', unresolved: 'Check permission restrictions.',
+    nextAction: 'Clarify the first qualifying action.', responsible: 'Delivery engineer' });
+  await post(actionUrl, 200, { kind: 'plan', requestId: deliveryIntervention, diagnosisId: diagnosis, followUpPeriodId: 'period-002',
+    improvement: 'Make the synthetic instructions clearer.', responsible: 'Delivery engineer', reason });
+  await post(actionUrl, 200, { kind: 'implement', requestId: randomUUID(), interventionId: deliveryIntervention,
+    implementedAt: adoptionFixture.implementationDate, reason });
+  for (const event of adoptionFixture.events('improvement')) await post(ADOPTION_OBSERVATIONS, 201, event, { authorization: 'Bearer ' + sourceToken });
+  await post(actionUrl, 200, { kind: 'follow-up', requestId: randomUUID(), interventionId: deliveryIntervention, reason });
+  await download(ADOPTION_ASSURANCE + '/cases/' + firstCase + '/export', 'delivery-adoption-assurance.json');
+
   await post(assessment + '/revisions', 200, { revision: 4, action: 'reassess', reason: 'Open a new synthetic baseline for the pre-commit recovery scenario.' });
   await createFixtureDelivery((path, payload) => post(path, 200, payload), assessment);
   const secondCase = (await app.inject(assessment)).json().deliveryCases.at(-1).id;

@@ -61,3 +61,7 @@ The backend suite covers direct source-derived blockers without an incident, rev
 ## Downstream execution verification
 
 Run `npx vitest run backend/tests/downstream.test.ts` for the disposable database and simulator contract suite. The unrestricted Playwright FDA journey closes the real downstream HTTP response after committing the effect and verifies one dispatch and an authoritative lookup. The evidence export and PostgreSQL backup checks verify operation associations and independently recovered effect references. Docker checks compile and package both runtime entrypoints.
+
+## Delivery adoption assurance
+
+The adoption backend suite checks a populated migration, source access, replay, provenance, retry deduplication and follow-up lifecycle. The standard browser suite extends the verified delivery case through diagnosis, intervention and export. CI exports the linked adoption package and verifies adoption data after PostgreSQL backup and restore.

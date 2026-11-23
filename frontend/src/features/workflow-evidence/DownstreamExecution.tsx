@@ -89,6 +89,7 @@ export function DownstreamExecution({ caseId, token }: { caseId: string; token: 
   const canCancel = evidence?.canControl && operation?.state === 'queued';
   return <section aria-label="Synthetic downstream execution">
     <h4>Synthetic downstream execution</h4>
+    <a href={`#adoption?dataset=fda&case=${caseId}`}>Open FDA-linked Adoption Diagnostics</a>
     {error && <p role="alert">{error}</p>}
     {!info && !error && <p>Loading execution eligibility…</p>}
     {info && <>

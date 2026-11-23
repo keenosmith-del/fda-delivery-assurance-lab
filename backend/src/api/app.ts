@@ -15,6 +15,7 @@ import { evidenceDownload, sourceRevision } from './evidence.ts';
 import type { ExportContext } from './evidence.ts';
 import { queueStatus } from '../workers/telemetry.ts';
 
+import { registerAdoptionAssurance } from './adoption-assurance.ts';
 import { registerDownstream } from './downstream.ts';
 import { registerWorkflowAssessments } from './workflow-assessments.ts';
 import { registerAgentAssurance } from './agent-assurance.ts';
@@ -155,6 +156,7 @@ export function createApp({ pool, writeToken, enableFaults, logger = false, acce
   registerAgentAssurance(app, pool, scope, authorizeOperator, actor, exportContext);
   registerWorkflowAssessments(app, pool, scope, authorizeOperator, actor, exportContext);
   registerDownstream(app, pool, scope, downstream?.enabled === true, authorizeOperator, actor, exportContext, [fdaSource?.token, downstream?.token]);
+  registerAdoptionAssurance(app, pool, scope, authorizeOperator, actor, exportContext, fdaSource?.token, downstream?.token);
   registerIntelligence(app, pool, canWrite, actor, exportContext);
   registerMeasurement(app, pool, canWrite, actor, exportContext);
   return app;

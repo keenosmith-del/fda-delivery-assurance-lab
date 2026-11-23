@@ -132,3 +132,7 @@ Start the lab and independent simulator databases with `docker compose -f infras
 Publish the normal FDA fixture and `npm run fda:publish -- assurance-complete-window`. In **Workflow Evidence**, open workflow-003, submit a feasible reviewed assessment and approve implementation planning. Create the delivery case and choose **Start synthetic execution** with the lab-only attestation. Inspect the attempt history and download the evidence. ATS confirmations continue through the original worker.
 
 For the acceptance fault, start the simulator with `LAB_MODE=test LAB_DOWNSTREAM_TEST_FAULT=lost-acknowledgment npm run dev:downstream-simulator` before authorising a fresh case. Dispatch records an unavailable acknowledgment, then authoritative lookup verifies the committed effect. Fault settings apply to newly presented operation identities. Use a new approved case for each scenario.
+
+## Publish synthetic adoption observations
+
+Use the local adoption publisher with the same scoped lab credential as FDA-shaped ingestion. Obtain case ID, workflow ID, operation ID and verification time from a verified delivery, then run `npm run adoption:publish -- CASE_ID WORKFLOW_ID OPERATION_ID VERIFIED_AT baseline`. See Iteration 19 for follow-up periods and expected comparisons.

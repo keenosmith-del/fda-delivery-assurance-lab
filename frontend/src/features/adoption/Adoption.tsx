@@ -171,7 +171,7 @@ function AdoptionWorkspace({ id }: { id: string }) {
 
 export function Adoption() {
   return <>
-    <section className="heading"><h1>Adoption Diagnostics</h1><p>Investigate automation usage, record an intervention and compare follow-up measurements.</p></section>
+    <section className="heading"><h1>Adoption Diagnostics</h1><p>Investigate automation usage, record an intervention and compare follow-up measurements.</p><a href="#adoption?dataset=fda">FDA-linked Adoption Assurance</a></section>
     <AutomationPicker>{id => <AdoptionWorkspace key={id} id={id} />}</AutomationPicker>
   </>;
 }

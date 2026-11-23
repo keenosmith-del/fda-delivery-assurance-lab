@@ -126,3 +126,7 @@ The workspace prefix is `/api/integrations/fda/v1/downstream`.
 Writes require the operator role or the configured local equivalent and enabled execution. A repeated request key with identical content is accepted idempotently. A changed payload, a superseded case, or duplicate execution under a different key returns a conflict. A missing prerequisite or missing pilot confirmation returns 422.
 
 The dedicated loopback simulator accepts `POST /synthetic-downstream/v1/effects` and serves authoritative `GET /synthetic-downstream/v1/effects/:key` using its own bearer credential. The dispatch contract is `fda-lab.synthetic-effect/v1`.
+
+## Delivery adoption assurance
+
+`/api/integrations/fda/v1/adoption-assurance` provides case listing, detail and evidence exports at `GET /cases`, `GET /cases/:id` and `GET /cases/:id/export`. Operators establish assessments with `POST /cases/:id` and submit sequenced actions with `POST /cases/:id/actions`. The scoped lab source posts the versioned observation contract to `POST /observations`. Accepted, replayed and conflicting source events return 201, 200 and 409 respectively.
