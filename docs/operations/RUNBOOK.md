@@ -98,3 +98,17 @@ npm run fda:publish -- tenant-violation
 Open FDA Integration and select **Refresh ingestion** after publishing. Select a receipt to inspect validation, timestamps, revisions and the canonical reference. Follow the receipt to the imported source dataset in Agent Health or Workflow Evidence. For local machine-readable inspection, read `/api/integrations/fda/v1/receipts/<id>` on the API loopback origin.
 
 For a clean rerun, use a new disposable database and local `DATABASE_URL`, then run `npm run db:migrate`. Use the existing seed command if you also need legacy fixtures. Confirm the database identity before removing any explicitly disposable environment. The publisher never resets the database. An identical replay of an interrupted delivery can resume processing. The gateway stops after three failed projection attempts and retains the event and prior receipts.
+
+## Agent operational assurance
+
+Start the existing local stack and apply the migrations, including 007. Configure a synthetic source credential and complete the existing FDA publisher setup.
+
+1. Run `npm run fda:publish -- normal`. In Agent Health, open the simulated FDA dataset. Find **Agent operational assurance** and inspect `window-001`.
+2. Run `npm run fda:publish -- reporting-interruption`. Refresh assurance, open `endpoint-006`, then open a reporting interruption incident.
+3. Record a hypothesis and its supporting receipts, select an intervention and record its implementation. **Evaluate recovery** before sending later events to see insufficient evidence.
+4. Run `npm run fda:publish -- recovery`. Evaluate recovery again. The later valid heartbeat can resolve the reporting case. Inspect the audit and **Download operational assurance JSON**.
+5. Run `npm run fda:publish -- assurance-regression`. Refresh and open the later reporting interruption for `endpoint-006`. The original resolution remains in history.
+6. Run `npm run fda:publish -- permission-degradation` on a fresh fixture to see a new limited permission report on `endpoint-006`. For the partial recovery demonstration, use the baseline capture-permissions condition on `endpoint-007`. Open a case and record diagnosis, plan and implementation before sending `assurance-partial-recovery`. Verify to see partial recovery. Send `assurance-permission-recovery` and verify after the additional observation arrives.
+7. Use the workflow links to inspect the affected cohort, earlier missing intervals and linked cases. Run `npm run fda:publish -- assurance-complete-window` after the reporting recovery to inspect the separate, complete `window-003` assessment.
+
+Additional scenarios include `delayed-delivery`, `assurance-version-transition`, `assurance-version-recovery`, `assurance-out-of-order` and `duplicate-replay`. Use a fresh disposable database when repeating verification exercises. Evidence already received before implementation remains historical and cannot pass the post-intervention timing rule.

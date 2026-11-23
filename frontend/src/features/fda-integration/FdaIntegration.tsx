@@ -1,6 +1,8 @@
 import { z } from 'zod';
+import { workflowAssurance } from '../../../../shared/contracts/agent-assurance.ts';
 import { FDA_GATEWAY, fdaAgentProjection, fdaReceipt, fdaRecordLink, fdaStatus, fdaWorkflowProjection } from '../../../../shared/contracts/fda-ingestion.ts';
 import { dateLabel } from '../../lib/dates.ts';
+import { AgentAssurancePanel, WorkflowReadiness } from '../agent-health/AgentAssurance.tsx';
 import { useResource } from '../../lib/resource.ts';
 
 type ReceiptLink = z.infer<typeof fdaRecordLink>;
@@ -84,7 +86,7 @@ export function FdaIntegration({ receiptId }: { receiptId?: string }) {
   </>;
 }
 
-export function ImportedAgentHealth({ receiptId }: { receiptId?: string }) {
+export function ImportedAgentHealth({ receiptId, incidentId, windowId }: { receiptId?: string; incidentId?: string; windowId?: string }) {
   const resource = useResource(`${FDA_GATEWAY}/agent-health`, fdaAgentProjection);
   const health = resource.data;
   const focused = health?.devices.find(device => device.receipts.some(receipt => receipt.id === receiptId));
@@ -118,20 +120,24 @@ export function ImportedAgentHealth({ receiptId }: { receiptId?: string }) {
         <h3>Ingestion provenance</h3><ReceiptLinks records={device.receipts} />
       </details>)}
     </section>}
+    <AgentAssurancePanel key={windowId ?? ''} incidentId={incidentId} selectedWindow={windowId} />
   </>;
 }
 
-export function ImportedWorkflowEvidence({ receiptId }: { receiptId?: string }) {
+export function ImportedWorkflowEvidence({ receiptId, workflowId }: { receiptId?: string; workflowId?: string }) {
   const resource = useResource(`${FDA_GATEWAY}/workflow-evidence`, fdaWorkflowProjection);
+  const readiness = useResource(`${FDA_GATEWAY}/assurance/workflow-readiness`, workflowAssurance);
   return <>
     <section className="heading"><h1>Workflow Evidence</h1><p>Simulated FDA publisher · <a href="#discover">View legacy fixtures</a></p></section>
     {resource.error && <p role="alert">{resource.error} <button className="secondary" onClick={resource.retry}>Retry</button></p>}
     {!resource.data && !resource.error && <p role="status">Loading imported workflows…</p>}
     {resource.data?.length === 0 && <p>No workflow candidates received.</p>}
     {resource.data?.map(item => <details className="panel" key={item.candidate.workflowId}
-      open={!receiptId || item.receipts.some(receipt => receipt.id === receiptId) || item.observations.some(o => o.receipt.id === receiptId) || undefined}>
+      open={workflowId ? workflowId === item.candidate.workflowId : !receiptId || item.receipts.some(receipt => receipt.id === receiptId) || item.observations.some(o => o.receipt.id === receiptId) || undefined}>
       <summary>{item.candidate.workflowId} · {item.candidate.category}</summary>
       <p>Source estimate {item.candidate.frequency} {item.candidate.unit.replaceAll('-', ' ')}. Source recommendation {item.candidate.recommendation.replaceAll('-', ' ')}.</p>
+      <WorkflowReadiness item={readiness.data?.find(row => row.workflowId === item.candidate.workflowId)}
+        loaded={Boolean(readiness.data)} error={readiness.error} />
       <h3>Observation windows</h3>
       <ul>{item.windows.map(window => <li key={window.windowId}>
         {window.windowId} · {dateLabel(window.start)} to {dateLabel(window.end)} · {window.completeness} coverage

@@ -71,3 +71,7 @@ The root Dockerfile packages API, frontend and worker. See the [deployment runbo
 
 
 See [Evidence integrity](docs/architecture/EVIDENCE_INTEGRITY.md) for the scoring rubric, calculation inputs, and interpretation of synthetic outcome and adoption comparisons. The verification workflow attaches the six generated JSON receipts to each successful release run.
+
+### Agent operational assurance
+
+The imported Agent Health view evaluates readiness, identifies source evidence gaps and lets operators record and verify incident interventions. Workflow Evidence shows the affected endpoint cohort and uses coverage and incident state for its engineering review gate. See the [operational assurance walkthrough](docs/operations/RUNBOOK.md#agent-operational-assurance).

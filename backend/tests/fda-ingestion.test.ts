@@ -185,7 +185,7 @@ test('upgrades a previously migrated fixture schema without changing its records
   const expected = await loadMigrations(migrationDir);
   let db: Awaited<ReturnType<typeof openTestDatabase>> | undefined;
   try {
-    for (const migration of expected.filter(item => item.name !== '006_fda_ingestion.sql')) {
+    for (const migration of expected.filter(item => item.name < '006_')) {
       await copyFile(join(migrationDir, migration.name), join(temp, migration.name));
     }
     db = await openTestDatabase(temp);

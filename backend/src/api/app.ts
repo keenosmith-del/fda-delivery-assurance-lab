@@ -15,6 +15,7 @@ import { evidenceDownload, sourceRevision } from './evidence.ts';
 import type { ExportContext } from './evidence.ts';
 import { queueStatus } from '../workers/telemetry.ts';
 
+import { registerAgentAssurance } from './agent-assurance.ts';
 import { registerFdaIngestion } from './fda-ingestion.ts';
 import type { FdaSourceConfig } from './fda-ingestion.ts';
 
@@ -141,6 +142,13 @@ export function createApp({ pool, writeToken, enableFaults, logger = false, acce
   app.get('/api/ops/status', async () => ({ ...(await queueStatus(pool)), requests: { ...requestCounts } }));
   if (uiDir) registerWeb(app, uiDir);
   registerFdaIngestion(app, pool, fdaSource, exportContext.revision);
+  const scope = { tenantId: fdaSource?.tenantId ?? 'tenant-001', sourceId: fdaSource?.sourceId ?? 'source-001' };
+  registerAgentAssurance(app, pool, scope, request => {
+    if (access) return security.role(request) === 'operator';
+    const auth = request.headers.authorization;
+    if (fdaSource?.token && auth === `Bearer ${fdaSource.token}`) return false;
+    return writeToken ? canWrite(auth) : auth === undefined;
+  }, actor, exportContext);
   registerIntelligence(app, pool, canWrite, actor, exportContext);
   registerMeasurement(app, pool, canWrite, actor, exportContext);
   return app;

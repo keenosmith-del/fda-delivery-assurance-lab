@@ -78,3 +78,19 @@ The lab owns `fda-lab.ingestion/v1`. The shared schemas live in `shared/contract
 | `GET /api/integrations/fda/v1/workflow-evidence` | Workspace access. Returns candidates, linked windows, validated observations, evidence gaps and supporting receipts. |
 
 Workspace reads use the existing hosted Basic credentials or loopback-only local access. Source Bearer credentials grant writes only. The source route permits up to 240 authenticated and 30 unauthenticated requests per minute per API process. Endpoints are registered independently of legacy fixture routes. Time semantics and restart handling are in [Iteration 15](../iterations/ITERATION_15_FDA_INTEGRATION_GATEWAY.md).
+
+## Agent operational assurance
+
+Routes live under `/api/integrations/fda/v1/assurance` and inherit the configured tenant and source. Hosted viewer, demo and operator roles may read. Only the hosted operator may write. Local writes follow the configured operator token policy. The ingestion publisher cannot act as an operator.
+
+| Method and path | Behaviour |
+| --- | --- |
+| `GET /assessment` | Latest assessment or a historical selection via optional `windowId` and ISO 8601 `asOf`. Returns counts, discrepancies, conditions, version, permission and delivery provenance. An unknown selection returns 404. |
+| `GET /workflow-readiness` | Cohort, missing intervals, incident links and evidence decision for each imported workflow. |
+| `GET /incidents` | Scoped cases across all windows or the specified `windowId`. |
+| `POST /incidents` | Open or reuse a case with `endpointId`, `category` and optional assessment selector. Unsupported conditions return 422. |
+| `GET /incidents/:id` | Initial condition, current endpoint, impacted workflow references and audited decisions. |
+| `POST /incidents/:id/actions` | Strict JSON with `action` of `diagnose`, `plan`, `implement` or `verify`. Diagnoses require scoped and relevant receipt UUIDs, a hypothesis, certainty, unknowns and next action. Plans require action category, reason, role slug and target date. Implementation requires a note. Verification accepts an optional assessment selector. Invalid transitions return 409. |
+| `GET /incidents/:id/export` | Evidence download with scoped receipt links, original assessment, audited verification outcomes, role and revision, and stated limits. |
+
+Writes cap the request body at 4 KiB. Incident and export lookups return 404 for unknown or out-of-scope IDs. Missing and duplicate evidence can never promote an incident to resolved without the category-specific recovery predicates.

@@ -1,13 +1,14 @@
 import { fdaAgentProjection, fdaWorkflowProjection } from '../../../../shared/contracts/fda-ingestion.ts';
 import type { FdaCanonicalRecord, FdaEvent, FdaScope } from '../../../../shared/contracts/fda-ingestion.ts';
-import type { Database } from '../../db/pool.ts';
+import type { SqlClient } from '../../db/pool.ts';
 import { measureDevice } from '../agent-health/service.ts';
 import { listCanonical } from './service.ts';
+import type { ReceivedCanonical } from './service.ts';
 
 type Kind = FdaEvent['recordType'];
-type TypedRecord<T extends Kind> = FdaCanonicalRecord & { event: Extract<FdaEvent, { recordType: T }> };
+type TypedRecord<T extends Kind> = ReceivedCanonical & { event: Extract<FdaEvent, { recordType: T }> };
 
-function recordsOf<T extends Kind>(rows: FdaCanonicalRecord[], type: T): TypedRecord<T>[] {
+function recordsOf<T extends Kind>(rows: ReceivedCanonical[], type: T): TypedRecord<T>[] {
   return rows.filter((row): row is TypedRecord<T> => row.event.recordType === type);
 }
 
@@ -25,7 +26,7 @@ function link(row: FdaCanonicalRecord) {
   return { id: row.receiptId, sourceRecordId, recordType, occurredAt };
 }
 
-export async function agentProjection(db: Database, scope: FdaScope) {
+export async function agentProjection(db: SqlClient, scope: FdaScope) {
   const rows = await listCanonical(db, scope, [
     'observation.window', 'endpoint.registration', 'endpoint.status', 'endpoint.permission', 'workflow.observation',
   ]);
@@ -72,7 +73,7 @@ export async function agentProjection(db: Database, scope: FdaScope) {
   return fdaAgentProjection.parse({ window, devices, reporting: devices.filter(device => device.reporting).length });
 }
 
-export async function workflowProjection(db: Database, scope: FdaScope) {
+export async function workflowProjection(db: SqlClient, scope: FdaScope) {
   const rows = await listCanonical(db, scope, ['workflow.candidate', 'observation.window', 'workflow.observation']);
   const candidates = byKey(recordsOf(rows, 'workflow.candidate'), row => row.subjectId);
   const windows = byKey(recordsOf(rows, 'observation.window'), row => row.subjectId);
@@ -95,7 +96,10 @@ export async function workflowProjection(db: Database, scope: FdaScope) {
         gaps.push(`Supporting observation ${id} is missing or outside its declared workflow or window.`);
         return [];
       }
-      return [{ ...p, deliveredLate: record.event.occurredAt > window.end, receipt: link(record) }];
+      const elapsed = (record.receivedAt.getTime() - Date.parse(record.event.occurredAt)) / 1000;
+      return [{ ...p, deliveredLate: elapsed > 300, deliverySeconds: elapsed >= 0 ? elapsed : null,
+        receivedAt: record.receivedAt.toISOString(), arrivedAfterWindow: record.receivedAt > new Date(window.end),
+        reportedAfterWindow: record.event.occurredAt > window.end, receipt: link(record) }];
     });
     if (!linkedObservations.length) gaps.push('No verified supporting observations are linked.');
     return {
