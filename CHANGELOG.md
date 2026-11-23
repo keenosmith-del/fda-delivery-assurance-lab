@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added synthetic case investigations, scoped citation snapshots, optional structured inference and persistent human review.
+
 - Added delivery-linked synthetic time studies with modeled and observed measures, revisioned outcome reviews and reproducible evidence exports.
 
 - Linked verified synthetic delivery cases to independently published adoption observations, interventions and follow-up comparisons.

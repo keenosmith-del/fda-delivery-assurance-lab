@@ -83,3 +83,5 @@ The imported Agent Health view evaluates readiness, identifies source evidence g
 FDA-linked Adoption Assurance is available from a delivery case or the Adoption Diagnostics workspace. It joins synthetic usage observations to the originating engineering approval and treats verified delivery, source-reported activity and adoption as separate measures.
 
 FDA-linked Outcome Assurance connects verified delivery, adoption and human-reviewed synthetic handling measurements. Follow the [connected demonstration](docs/iterations/ITERATION_20_END_TO_END_OUTCOME_ASSURANCE.md#reproduce-the-connected-demonstration) to reproduce the time study, review and evidence export.
+
+**Evidence Investigation** can save scoped synthetic case evidence and optionally produce a validated, cited advisory analysis. Inference is disabled by default. See [Iteration 21](docs/iterations/ITERATION_21_EVIDENCE_GROUNDED_AI_INVESTIGATION.md) for setup, demonstration and verification.

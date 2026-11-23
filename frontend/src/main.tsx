@@ -6,6 +6,7 @@ import { AgentHealth } from './features/agent-health/AgentHealth.tsx';
 import { DeliveryAdoption } from './features/adoption/DeliveryAdoption.tsx';
 import { Adoption } from './features/adoption/Adoption.tsx';
 import { DeliveryOutcome } from './features/outcomes/DeliveryOutcome.tsx';
+import { Investigation } from './features/investigations/Investigation.tsx';
 import { Outcomes } from './features/outcomes/Outcomes.tsx';
 import { FdaIntegration, ImportedAgentHealth, ImportedWorkflowEvidence } from './features/fda-integration/FdaIntegration.tsx';
 import './styles/app.css';
@@ -18,6 +19,7 @@ const routes = [
   { id: 'agent-health', label: 'Agent Health', view: AgentHealth },
   { id: 'adoption', label: 'Adoption Diagnostics', view: Adoption },
   { id: 'outcomes', label: 'Outcome Verification', view: Outcomes },
+  { id: 'investigations', label: 'Evidence Investigation', view: Investigation },
 ] as const;
 
 function Overview() {
@@ -28,6 +30,7 @@ function Overview() {
     'Inspect synthetic endpoint history, permissions and observation gaps.',
     'Diagnose usage barriers, record interventions and compare follow-up measurements.',
     'Inspect opportunity models, execution costs and the evidence for measured outcomes.',
+    'Investigate delivery evidence and review cited advisory findings.',
   ];
   return <>
     <section className="heading"><h1>Delivery Assurance</h1>
@@ -60,7 +63,8 @@ function App() {
     <nav className="navigation" aria-label="Workspace">
       {routes.map(route => <a href={`#${route.id}`} key={route.id} aria-current={active.id === route.id ? 'page' : undefined}>{route.label}</a>)}
     </nav>
-    <main>{imported && active.id === 'adoption' ? <DeliveryAdoption caseId={params.get('case') ?? undefined} /> : imported && active.id === 'outcomes' ? <DeliveryOutcome caseId={params.get('case') ?? undefined} /> : <View receiptId={receiptId} incidentId={params.get('incident') ?? undefined}
+    <main>{active.id === 'investigations' ? <Investigation caseId={params.get('case') ?? undefined} investigationId={params.get('investigation') ?? undefined}
+      workflowId={params.get('workflow') ?? undefined} search={query} /> : imported && active.id === 'adoption' ? <DeliveryAdoption caseId={params.get('case') ?? undefined} /> : imported && active.id === 'outcomes' ? <DeliveryOutcome caseId={params.get('case') ?? undefined} /> : <View receiptId={receiptId} incidentId={params.get('incident') ?? undefined}
       windowId={params.get('window') ?? undefined} workflowId={params.get('workflow') ?? undefined} />}</main>
     <footer>Independent engineering assessment</footer>
   </div>;

@@ -149,6 +149,7 @@ export function WorkflowAssessment({ workflowId }: { workflowId: string }) {
         <ul>{d.prerequisites.map((p, i) => <li key={i}>{p.requirement} · {human(p.status)} · {p.basis}</li>)}</ul>
         {d.risks.length > 0 && <ul>{d.risks.map((risk, i) => <li key={i}>{risk.description} · {risk.residual} residual risk · {risk.mitigation}</li>)}</ul>}
         <ol>{d.plan.phases.map((phase, i) => <li key={i}>{phase}</li>)}</ol>
+        <p><a href={`#investigations?case=${d.id}`}>Evidence Investigation</a></p>
         <DownstreamExecution caseId={d.id} token={token} />
       </details>)}
       <details><summary>Revision and audit history</summary>

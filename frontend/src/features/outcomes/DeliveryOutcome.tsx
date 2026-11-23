@@ -120,7 +120,11 @@ function CaseOutcome({ caseId }: { caseId: string }) {
     <p>{adoption.workflowId} · delivery case {caseId} · approval revision {adoption.revision}</p>
     <nav aria-label="Outcome evidence links">
       <a href={`#discover?dataset=fda&workflow=${adoption.workflowId}`}>Workflow Evidence and delivery case</a>{' · '}
-      <a href={`#adoption?dataset=fda&case=${caseId}`}>Linked adoption and intervention evidence</a>
+      <a href={`#adoption?dataset=fda&case=${caseId}`}>Linked adoption and intervention evidence</a>{' · '}
+      <a href={'#investigations?' + new URLSearchParams({ category: 'outcome-verification', case: caseId, ...(selection && {
+        baseline: selection.baseline, comparison: selection.comparison, method: selection.method,
+        ...(selection.interventionId && { interventionId: selection.interventionId }),
+      }) })}>Evidence Investigation</a>
     </nav>
     <p role="status">Outcome state · {label(data.status)}</p>
     <p>Engineering decision {adoption.decisionId} · {adoption.operation?.effectId ? 'Implementation independently verified' : 'Implementation verification pending'}</p>

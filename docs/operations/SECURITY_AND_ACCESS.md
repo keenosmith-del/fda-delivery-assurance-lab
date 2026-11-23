@@ -20,3 +20,7 @@ Request logs contain generated correlation IDs, HTTP methods, route templates, s
 ## Downstream access
 
 Hosted readers inherit workspace authentication. Explicit authorisation and recovery actions require an operator in an enabled lab. FDA publisher and simulator bearer credentials are separate from the workspace role and receive no execution rights. The worker accepts a fixed loopback HTTP origin from local configuration and rejects redirects. Operation input cannot choose a destination. Simulator fault settings are confined to test mode.
+
+## Investigation boundary
+
+Workspace viewers may inspect authorised investigations and exports. Operators initiate inference and record review actions. Source-publisher and downstream credentials cannot use investigation writes. Configured model requests use a fixed destination, timeout, input and output limits, and no tools. The provider receives a bounded synthetic fact projection and the explicit operator question. Use a distinct server-only provider secret and obtain approval for hosted egress before enabling inference.

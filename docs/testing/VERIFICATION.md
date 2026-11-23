@@ -69,3 +69,7 @@ The adoption backend suite checks a populated migration, source access, replay, 
 ## Delivery outcome assurance
 
 The adoption and outcome integration tests exercise the populated migration upgrade, source scope, measurement replay, operator review concurrency, matched and normalised calculations, negative and zero outcomes, stale snapshots and restart persistence. The connected Chromium journey exercises modeled-only evidence, negative handling effort, operator review, export and stale-review display. The CI evidence runner publishes scenario JSON and the PostgreSQL restore job reads both databases to verify the same reviewed calculation, fingerprint and history. The image check imports the outcome API and verifies its compiled contracts, service and migration.
+
+## Evidence Investigation
+
+The offline evaluation covers source, agent, engineering, downstream, adoption and outcome citations, stale evidence, exact numerical grounding, cross-tenant references, injected output and provider failures. Integration checks cover a populated migration 012 upgrade, case isolation, authenticated requests, replay and concurrent review, stale results and provider timeouts. The connected browser test verifies investigation creation, citation inspection, rejection, persistence, export, validation failure and staleness. CI exercises the exported scenarios and native PostgreSQL restoration without a live model credential.

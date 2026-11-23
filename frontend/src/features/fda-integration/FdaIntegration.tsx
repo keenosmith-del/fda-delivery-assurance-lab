@@ -129,7 +129,7 @@ export function ImportedWorkflowEvidence({ receiptId, workflowId }: { receiptId?
   const resource = useResource(`${FDA_GATEWAY}/workflow-evidence`, fdaWorkflowProjection);
   const readiness = useResource(`${FDA_GATEWAY}/assurance/workflow-readiness`, workflowAssurance);
   return <>
-    <section className="heading"><h1>Workflow Evidence</h1><p>Simulated FDA publisher · <a href="#discover">View legacy fixtures</a></p></section>
+    <section className="heading"><h1>Workflow Evidence</h1><p>Simulated FDA publisher · <a href="#discover">View legacy fixtures</a> · <a href={'#investigations' + (workflowId ? `?workflow=${workflowId}` : '')}>Evidence Investigation</a></p></section>
     {resource.error && <p role="alert">{resource.error} <button className="secondary" onClick={resource.retry}>Retry</button></p>}
     {!resource.data && !resource.error && <p role="status">Loading imported workflows…</p>}
     {resource.data?.length === 0 && <p>No workflow candidates received.</p>}

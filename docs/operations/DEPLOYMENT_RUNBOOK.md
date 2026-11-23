@@ -46,3 +46,7 @@ Railway references cover [private networking](https://docs.railway.com/networkin
 ## Synthetic downstream runtime
 
 The image contains both downstream entrypoints and migration 009. The synthetic services are intended for a local or disposable CI lab. Hosted deployment uses the existing API with synthetic execution disabled. Keep the lab operation database and simulator effect database separate. The lab backup proves restoration of effect references. The simulator requires a separate backup and restore.
+
+## Optional hosted investigation provider
+
+Deploy with inference disabled unless synthetic data egress and the provider settings have been approved for the environment. When approved, configure the model name, server-only key, feature flag and hosted approval in the API service. Run a limited operator-initiated investigation with synthetic facts, check usage and timeout telemetry, and verify the no-credentials path before enabling it for the intended operators. Keep the independent simulator and worker topology documented separately.

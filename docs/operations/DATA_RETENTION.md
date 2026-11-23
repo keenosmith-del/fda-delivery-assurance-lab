@@ -11,3 +11,7 @@ Use dedicated environments for fixtures, staging and any future production deplo
 | Secrets | Keep in the provider's secret settings or the authorised credential store, separate from snapshots and evidence exports. |
 
 These limits are an operational policy. The app has no background deletion task. At the end of the review, confirm the dedicated project and database identifiers, preserve approved evidence, then schedule environment removal with authorised operators. A normal application restart, migration or seed does not delete data. Final data removal must cover snapshots and exports if held.
+
+## Investigation records
+
+The application stores operator questions, bounded synthetic facts, citation references, validated selections, usage metadata and review history in PostgreSQL. Provider keys, raw response bodies and free-form retrieved notes are excluded from snapshots and exports. Apply the deployment’s review-evidence retention policy to the investigation tables and include those tables in database restoration checks. Configured model processing is an independent external boundary with its own approved retention settings.

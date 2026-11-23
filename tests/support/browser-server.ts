@@ -8,10 +8,11 @@ import { openTestDatabase } from './database.ts';
 import { seedIntelligence } from '../../database/seeds/intelligence.ts';
 import { seedMeasurement } from '../../database/seeds/measurement.ts';
 
+import { fixtureProvider } from './investigation-model.ts';
 import { browserSource } from './fda-fixture.ts';
 
 const database = await openTestDatabase();
-const app = createApp({ pool: database.pool, enableFaults: true, fdaSource: browserSource, downstream: { enabled: true, token: simulatorToken } });
+const app = createApp({ pool: database.pool, environment: 'test', investigationProvider: fixtureProvider, enableFaults: true, fdaSource: browserSource, downstream: { enabled: true, token: simulatorToken } });
 const stop = new AbortController();
 for (const signal of ['SIGINT', 'SIGTERM'] as const) process.once(signal, () => stop.abort());
 

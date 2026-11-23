@@ -71,3 +71,7 @@ Adoption exports distinguish the authoritative operation, separately published s
 ## FDA-linked outcome evidence
 
 A delivery-linked outcome export includes the immutable approval snapshot, the independently verified operation reference, adoption and intervention observations, time-study declarations and rows, model assumptions, formulas and review snapshots. Occurrence time controls period membership and receipt time preserves ingestion chronology. Fingerprints cover the selected study and adoption inputs, implementation and linked intervention. A materially changed input makes the corresponding review stale. The [iteration record](../iterations/ITERATION_20_END_TO_END_OUTCOME_ASSURANCE.md) documents the formulas and example results.
+
+## Investigation evidence and inference
+
+Investigation snapshots retain versioned and scoped references to the synthetic case and selected source records. Proposed findings must repeat registered typed facts exactly. Unknown references, incorrect numbers, incompatible classifications and omissions of material gaps or contradictions fail validation. Hypotheses and recommendations are advisory categories. Review decisions and previously used evidence remain available when the current fingerprint changes.
