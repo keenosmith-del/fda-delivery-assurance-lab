@@ -50,6 +50,9 @@ node --input-type=module -e '
 '
 DATABASE_URL="$database_url" node --input-type=module -e '
   import { database } from "./backend/src/db/pool.ts";
+  import { randomUUID } from "node:crypto";
+  import { outcomeFixture } from "./scripts/outcome-fixture.ts";
+  import { readOutcomeAssurance, receiveOutcome, recordOutcomeReview } from "./backend/src/modules/outcomes/assurance.ts";
   import { receiveObservation } from "./backend/src/modules/adoption/assurance.ts";
   import { fixtureWindows } from "./scripts/adoption-fixture.ts";
   import { fixtureScope } from "./scripts/fda-fixture.ts";
@@ -61,6 +64,18 @@ DATABASE_URL="$database_url" node --input-type=module -e '
     const fixture = fixtureWindows({ caseId: delivery.id, workflowId: "workflow-003",
       operationId: operation.id, verifiedAt: operation.updated_at.toISOString() });
     for (const event of fixture.events("baseline")) await receiveObservation(pool, fixtureScope, event);
+    for (const event of fixture.events("improvement")) await receiveObservation(pool, fixtureScope, event);
+    const outcome = outcomeFixture({ caseId: delivery.id, workflowId: "workflow-003", verifiedAt: operation.updated_at.toISOString() });
+    for (const variant of ["model","baseline","comparison"]) {
+      for (const event of outcome.events(variant)) await receiveOutcome(pool, fixtureScope, event);
+    }
+    const selection = { baseline: "period-001", comparison: "period-002", method: "matched-items" };
+    const evidence = await readOutcomeAssurance(pool, fixtureScope, delivery.id, selection);
+    if (evidence.comparison?.difference !== 140) throw new Error("Unexpected handling difference");
+    await recordOutcomeReview(pool, fixtureScope, delivery.id, { ...selection, requestId: randomUUID(), expectedRevision: 0,
+      fingerprint: evidence.fingerprint, outcome: "reviewed-synthetic-comparison",
+      justification: "Matched four synthetic opportunities for the restore exercise.", limitations: "Synthetic laboratory data." },
+      { role: "operator", sourceRevision: null });
   } finally { await pool.end(); }
 '
 stop_fda_api
@@ -110,5 +125,35 @@ adoption_query="SELECT (SELECT count(*) FROM fda_adoption_assessments),
     ON o.body->>'operationId'=d.id::text AND o.delivery_case_id=d.delivery_case_id AND d.state='succeeded')"
 for database in fda_backup_source fda_backup_restore; do
   adoption="$(docker exec "$container" psql -At -U fda -d "$database" -c "$adoption_query")"
-  [[ "$adoption" == '1|1|16|1' ]]
+  [[ "$adoption" == '1|4|34|1' ]]
 done
+
+outcome_query="SELECT
+  (SELECT count(*) FROM fda_outcome_assessments a JOIN fda_workflow_delivery_cases c
+    ON (a.tenant_id,a.source_id,a.delivery_case_id,a.assessment_id,a.assessment_revision,a.decision_id)
+      =(c.tenant_id,c.source_id,c.id,c.assessment_id,c.revision,c.decision_id)),
+  (SELECT count(*) FROM fda_outcome_measurements),
+  (SELECT count(*) FROM fda_outcome_receipts r JOIN fda_outcome_measurements m USING (tenant_id,source_id,event_id)),
+  (SELECT count(*) FROM fda_outcome_reviews WHERE revision=1 AND snapshot#>>'{comparison,difference}'='140')"
+for database in fda_backup_source fda_backup_restore; do
+  outcome="$(docker exec "$container" psql -At -U fda -d "$database" -c "$outcome_query")"
+  [[ "$outcome" == '1|36|36|1' ]]
+done
+DATABASE_URL="$database_url" node --input-type=module -e '
+  import assert from "node:assert/strict";
+  import { database } from "./backend/src/db/pool.ts";
+  import { readOutcomeAssurance } from "./backend/src/modules/outcomes/assurance.ts";
+  import { fixtureScope } from "./scripts/fda-fixture.ts";
+  async function read(url) {
+    const pool = database(url);
+    try {
+      const { rows: [delivery] } = await pool.query("SELECT id FROM fda_workflow_delivery_cases");
+      const outcome = await readOutcomeAssurance(pool, fixtureScope, delivery.id);
+      assert.equal(outcome.reviewedDifference, 140);
+      assert.equal(outcome.reviewHistory[0].stale, false);
+      return outcome;
+    } finally { await pool.end(); }
+  }
+  const url = process.env.DATABASE_URL;
+  assert.deepEqual(await read(url), await read(url.replace("fda_backup_source", "fda_backup_restore")));
+'

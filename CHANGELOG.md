@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added delivery-linked synthetic time studies with modeled and observed measures, revisioned outcome reviews and reproducible evidence exports.
+
 - Linked verified synthetic delivery cases to independently published adoption observations, interventions and follow-up comparisons.
 
 - Added scoped synthetic downstream execution, durable dispatch, worker lease recovery and independently reconciled effect evidence.

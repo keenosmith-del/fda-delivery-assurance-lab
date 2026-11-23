@@ -1,3 +1,6 @@
+import { randomUUID } from 'node:crypto';
+import { OUTCOME_MEASUREMENTS } from '../../shared/contracts/outcome-assurance.ts';
+import { outcomeFixture } from '../../scripts/outcome-fixture.ts';
 import { ADOPTION_ASSURANCE, ADOPTION_OBSERVATIONS } from '../../shared/contracts/adoption-assurance.ts';
 import { fixtureWindows } from '../../scripts/adoption-fixture.ts';
 import { feasible, reviewedRisk } from '../support/workflow-review.ts';
@@ -86,7 +89,7 @@ test('records an incident, verifies new reporting evidence and exports its audit
 });
 
 test('approves an imported workflow and exports its verified execution after a lost acknowledgment', async ({ page, request }) => {
-  test.setTimeout(60_000);
+  test.setTimeout(90_000);
   const publish = (scenario: string) => publishScenario(async event => {
     const response = await request.post(FDA_EVENTS, {
       data: event, headers: { authorization: `Bearer ${browserSource.token}` },
@@ -205,6 +208,45 @@ test('approves an imported workflow and exports its verified execution after a l
   const adoptionExport = page.waitForEvent('download');
   await page.getByRole('link', { name: 'Download adoption evidence' }).click();
   expect((await adoptionExport).suggestedFilename()).toMatch(/-adoption-assurance.json$/);
+  await page.getByRole('link', { name: 'FDA-linked Outcome Assurance', exact: true }).click();
+  await expect(page.getByText('No time study recorded.', { exact: true })).toBeVisible();
+  const timeStudy = outcomeFixture({ caseId, workflowId: state.workflowId, verifiedAt: state.operation.verifiedAt });
+  const publishTime = (data: object) => request.post(OUTCOME_MEASUREMENTS, { data, headers: { authorization: `Bearer ${browserSource.token}` } });
+  for (const event of timeStudy.events('model')) expect((await publishTime(event)).status()).toBe(201);
+  await page.getByRole('button', { name: 'Refresh outcome evidence' }).click();
+  await expect(page.getByText('period-001 · Gross 360 seconds · Net 255 seconds', { exact: true })).toBeVisible();
+  await expect(page.getByText('Reviewed difference · Unknown', { exact: true })).toBeVisible();
+  for (const event of fixture.events('improvement')) {
+    const data = { ...event, eventId: randomUUID(), periodId: 'period-003' };
+    expect((await request.post(ADOPTION_OBSERVATIONS, { data, headers: { authorization: `Bearer ${browserSource.token}` } })).status()).toBe(201);
+  }
+  for (const variant of ['baseline', 'comparison', 'negative'] as const) {
+    for (const event of timeStudy.events(variant)) expect((await publishTime(event)).status()).toBe(201);
+  }
+  await page.getByRole('button', { name: 'Refresh outcome evidence' }).click();
+  await expect(page.getByLabel('Comparison study')).toBeVisible();
+  await page.getByLabel('Comparison study').selectOption('period-003');
+  await page.getByRole('button', { name: 'Compare outcome periods' }).click();
+  await expect(page.getByText('Observed difference · -100 seconds', { exact: true })).toBeVisible();
+  await page.getByLabel('Comparison study').selectOption('period-002');
+  await page.getByLabel('Adoption intervention').selectOption({ label: 'Clarify how to start the synthetic workflow.' });
+  await page.getByRole('button', { name: 'Compare outcome periods' }).click();
+  await expect(page.getByText('Observed difference · 140 seconds', { exact: true })).toBeVisible();
+  await page.getByText('Formulas and limitations', { exact: true }).click();
+  await expect(page.getByText('Baseline comparable human seconds minus comparison comparable human seconds.', { exact: false })).toBeVisible();
+  await page.getByLabel('Review justification').fill('Compared matched synthetic work and recorded the full handling effort.');
+  await page.getByLabel('Review limitations').fill('The observation does not establish intervention causality.');
+  await page.getByRole('button', { name: 'Record outcome review' }).click();
+  await expect(page.getByText('Reviewed difference · 140 seconds', { exact: true })).toBeVisible();
+  const outcomeExport = page.waitForEvent('download');
+  await page.getByRole('link', { name: 'Download outcome evidence', exact: true }).click();
+  expect((await outcomeExport).suggestedFilename()).toMatch(/-outcome-assurance.json$/);
+  const effort = timeStudy.events('comparison').find(event => event.kind === 'effort' && event.category === 'review')!;
+  expect((await publishTime({ ...effort, duration: 25, eventId: randomUUID(), sourceRevision: 'b'.repeat(40) })).status()).toBe(201);
+  await page.getByRole('button', { name: 'Refresh outcome evidence' }).click();
+  await expect(page.getByText('Outcome state · stale review', { exact: true })).toBeVisible();
+  await expect(page.getByText('Reviewed difference · Unknown', { exact: true })).toBeVisible();
+
   await page.getByRole('link', { name: 'Workflow Evidence and delivery case' }).click();
   await publish('workflow-evidence-change');
   await workflow.getByRole('button', { name: 'Refresh assessment' }).click();

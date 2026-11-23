@@ -43,7 +43,7 @@ export function measureWindow(periodId: string, events: Observation[], effect: V
   if ([...attempts.keys(), ...results.keys(), ...exceptions.keys(), ...handoffs].some(id => !opportunities.has(id))) {
     missing.push('Activity references an unobserved opportunity');
   }
-  const effectLinks = new Set(active.flatMap(e => e.kind === 'result' && e.operationId === effect?.id ? [e.opportunity] : []));
+  const effectLinks = new Set(active.flatMap(e => e.kind === 'result' && e.operationId && e.operationId === effect?.id ? [e.opportunity] : []));
   if (effectLinks.size > 1) missing.push('One verified delivery effect was linked to multiple opportunities');
   for (const [id, rows] of opportunities) {
     const first = rows[0]!;

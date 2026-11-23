@@ -95,7 +95,8 @@ function OutcomeWorkspace({ id }: { id: string }) {
 export function Outcomes() {
   const model = useResource('/api/outcomes/model', opportunityModel);
   return <>
-    <section className="heading"><h1>Outcome Verification</h1><p>Compare observed work, modeled benefits and reviewed synthetic measurements.</p></section>
+    <section className="heading"><h1>Outcome Verification</h1><p>Compare observed work, modeled benefits and reviewed synthetic measurements.</p>
+      <a href="#outcomes?dataset=fda">FDA-linked Outcome Assurance</a></section>
     <section className="panel coverage-summary">
       <h2>Modeled weekly opportunity</h2>
       {model.error ? <p role="alert">{model.error} <button className="secondary" onClick={model.retry}>Retry</button></p>

@@ -1,3 +1,5 @@
+import { OUTCOME_ASSURANCE, OUTCOME_MEASUREMENTS } from '../shared/contracts/outcome-assurance.ts';
+import { outcomeFixture } from './outcome-fixture.ts';
 import { ADOPTION_ASSURANCE, ADOPTION_OBSERVATIONS } from '../shared/contracts/adoption-assurance.ts';
 import { fixtureWindows } from './adoption-fixture.ts';
 import { DOWNSTREAM_API } from '../shared/contracts/downstream.ts';
@@ -73,6 +75,49 @@ try {
   for (const event of adoptionFixture.events('improvement')) await post(ADOPTION_OBSERVATIONS, 201, event, { authorization: 'Bearer ' + sourceToken });
   await post(actionUrl, 200, { kind: 'follow-up', requestId: randomUUID(), interventionId: deliveryIntervention, reason });
   await download(ADOPTION_ASSURANCE + '/cases/' + firstCase + '/export', 'delivery-adoption-assurance.json');
+  const outcomeUrl = OUTCOME_ASSURANCE + '/cases/' + firstCase;
+  const study = outcomeFixture({ caseId: firstCase, workflowId: 'workflow-003', verifiedAt: lost.operation.updated_at.toISOString(),
+    sourceRevision: process.env.LAB_SOURCE_REVISION });
+  await download(outcomeUrl + '/export', 'delivery-outcome-without-time-study.json');
+  for (const event of study.events('model')) await post(OUTCOME_MEASUREMENTS, 201, event, { authorization: 'Bearer ' + sourceToken });
+  await download(outcomeUrl + '/export', 'delivery-outcome-modeled-opportunity.json');
+  for (const variant of ['baseline', 'comparison', 'negative', 'unchanged', 'incomplete'] as const) {
+    for (const event of study.events(variant)) await post(OUTCOME_MEASUREMENTS, 201, event, { authorization: 'Bearer ' + sourceToken });
+  }
+  for (const periodId of ['period-003', 'period-004', 'period-005']) {
+    for (const event of adoptionFixture.events('improvement')) {
+      await post(ADOPTION_OBSERVATIONS, 201, { ...event, eventId: randomUUID(), periodId }, { authorization: 'Bearer ' + sourceToken });
+    }
+  }
+  const selection = { baseline: 'period-001', comparison: 'period-002', method: 'matched-items', interventionId: deliveryIntervention };
+  const query = '?' + new URLSearchParams(selection);
+  const result = (await app.inject(outcomeUrl + query)).json();
+  assert.equal(result.ready, true);
+  assert.equal(result.comparison.difference, 140);
+  await post(outcomeUrl + '/reviews', 200, { ...selection, requestId: randomUUID(), expectedRevision: 0, fingerprint: result.fingerprint,
+    outcome: 'reviewed-synthetic-comparison', justification: 'Matched the same four synthetic opportunities and included all effort.',
+    limitations: 'Synthetic observations support a handling-time comparison only.' });
+  await download(outcomeUrl + '/export' + query, 'delivery-outcome-assurance.json');
+  for (const [comparison, scenario, expected] of [
+    ['period-003', 'increased-overhead', -100], ['period-004', 'unchanged-effort', 0], ['period-005', 'incomplete-coverage', null],
+  ] as const) {
+    const query = '?' + new URLSearchParams({ baseline: selection.baseline, comparison, method: selection.method });
+    const scenarioResult = (await app.inject(outcomeUrl + query)).json();
+    assert.equal(scenarioResult.comparison.difference, expected, scenario);
+    await download(outcomeUrl + '/export' + query, 'delivery-outcome-' + scenario + '.json');
+  }
+  const late = study.events('comparison').find(event => event.kind === 'effort' && event.category === 'review')!;
+  await post(OUTCOME_MEASUREMENTS, 200, late, { authorization: 'Bearer ' + sourceToken });
+  await post(OUTCOME_MEASUREMENTS, 409, { ...late, duration: 25 }, { authorization: 'Bearer ' + sourceToken });
+  await post(OUTCOME_MEASUREMENTS, 201, { ...late, duration: 25, eventId: randomUUID(), sourceRevision: 'b'.repeat(40) },
+    { authorization: 'Bearer ' + sourceToken });
+  const stale = (await app.inject(outcomeUrl + query)).json();
+  assert.equal(stale.status, 'stale-review');
+  assert.equal(stale.reviewedDifference, null);
+  assert.equal(stale.reviewHistory[0].snapshot.comparison.difference, 140);
+  await download(outcomeUrl + '/export' + query, 'delivery-outcome-stale-review.json');
+
+
 
   await post(assessment + '/revisions', 200, { revision: 4, action: 'reassess', reason: 'Open a new synthetic baseline for the pre-commit recovery scenario.' });
   await createFixtureDelivery((path, payload) => post(path, 200, payload), assessment);

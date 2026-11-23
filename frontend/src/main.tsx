@@ -5,6 +5,7 @@ import { Discover } from './features/workflow-evidence/Discover.tsx';
 import { AgentHealth } from './features/agent-health/AgentHealth.tsx';
 import { DeliveryAdoption } from './features/adoption/DeliveryAdoption.tsx';
 import { Adoption } from './features/adoption/Adoption.tsx';
+import { DeliveryOutcome } from './features/outcomes/DeliveryOutcome.tsx';
 import { Outcomes } from './features/outcomes/Outcomes.tsx';
 import { FdaIntegration, ImportedAgentHealth, ImportedWorkflowEvidence } from './features/fda-integration/FdaIntegration.tsx';
 import './styles/app.css';
@@ -59,7 +60,7 @@ function App() {
     <nav className="navigation" aria-label="Workspace">
       {routes.map(route => <a href={`#${route.id}`} key={route.id} aria-current={active.id === route.id ? 'page' : undefined}>{route.label}</a>)}
     </nav>
-    <main>{imported && active.id === 'adoption' ? <DeliveryAdoption caseId={params.get('case') ?? undefined} /> : <View receiptId={receiptId} incidentId={params.get('incident') ?? undefined}
+    <main>{imported && active.id === 'adoption' ? <DeliveryAdoption caseId={params.get('case') ?? undefined} /> : imported && active.id === 'outcomes' ? <DeliveryOutcome caseId={params.get('case') ?? undefined} /> : <View receiptId={receiptId} incidentId={params.get('incident') ?? undefined}
       windowId={params.get('window') ?? undefined} workflowId={params.get('workflow') ?? undefined} />}</main>
     <footer>Independent engineering assessment</footer>
   </div>;
