@@ -1,3 +1,4 @@
+import { PageHeader, SegmentLinks } from '../../components/Workspace.tsx';
 import { useState } from 'react';
 import { coverage, deviceDetail } from '../../../../shared/contracts/intelligence.ts';
 import { useResource } from '../../lib/resource.ts';
@@ -10,7 +11,7 @@ export function AgentHealth() {
   const details = useResource(active ? `/api/agent-health/${active}` : null, deviceDetail);
   const device = details.data;
   return <>
-    <section className="heading"><h1>Agent Health</h1><p>Review synthetic endpoint reporting, permissions and gaps in the observation window. <a href="#agent-health?dataset=fda">View simulated FDA records</a></p></section>
+    <PageHeader title="Agent Health" summary="Review synthetic endpoint reporting, permissions and gaps in the observation window." actions={<SegmentLinks label="Agent datasets"><a href="#agent-health" aria-current="page">Legacy fixtures</a><a href="#agent-health?dataset=fda">View simulated FDA records</a></SegmentLinks>} />
     {health.error ? <p role="alert">{health.error} <button className="secondary" onClick={health.retry}>Retry</button></p>
       : !health.data ? <p role="status">Loading coverage…</p> : <>
         <div className="panel coverage-summary">

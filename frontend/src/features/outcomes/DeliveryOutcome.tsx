@@ -1,3 +1,4 @@
+import { PageHeader, SegmentLinks, TableRegion } from '../../components/Workspace.tsx';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { z } from 'zod';
@@ -50,11 +51,11 @@ function TimeStudy({ data }: { data: z.infer<typeof period> }) {
     <summary>{data.periodId} · {data.definition?.stage ?? 'undeclared'} · {data.items.length} observed items</summary>
     {data.definition && <p>{data.definition.start} to {data.definition.end} · as of {data.definition.asOf} ·
       {data.items.length}/{data.definition.expectedItems} items · {label(data.definition.method)} · {data.definition.cohort}</p>}
-    <table>
+    <TableRegion label={`Handling effort for ${data.periodId}`}><table>
       <thead><tr><th scope="col">Effort</th><th scope="col">Observed time</th></tr></thead>
       <tbody>{Object.entries(data.sums).map(([category, seconds]) =>
         <tr key={category}><th scope="row">{label(category)}</th><td>{amount(seconds)}</td></tr>)}</tbody>
-    </table>
+    </table></TableRegion>
     <p>Observed human handling · {amount(data.humanSeconds)}</p>
     <details><summary>Item measurements and source references</summary>
       {data.items.map(item => <p key={item.opportunity}>{item.opportunity} · {item.workload} · {amount(item.humanSeconds)} · {item.sourceEventIds.join(', ')}</p>)}
@@ -118,20 +119,20 @@ function CaseOutcome({ caseId }: { caseId: string }) {
   return <section className="panel">
     <h2>FDA-linked Outcome Assurance</h2>
     <p>{adoption.workflowId} · delivery case {caseId} · approval revision {adoption.revision}</p>
-    <nav aria-label="Outcome evidence links">
-      <a href={`#discover?dataset=fda&workflow=${adoption.workflowId}`}>Workflow Evidence and delivery case</a>{' · '}
-      <a href={`#adoption?dataset=fda&case=${caseId}`}>Linked adoption and intervention evidence</a>{' · '}
+    <SegmentLinks label="Outcome evidence links">
+      <a href={`#discover?dataset=fda&workflow=${adoption.workflowId}`}>Workflow Evidence and delivery case</a>
+      <a href={`#adoption?dataset=fda&case=${caseId}`}>Linked adoption and intervention evidence</a>
       <a href={'#investigations?' + new URLSearchParams({ category: 'outcome-verification', case: caseId, ...(selection && {
         baseline: selection.baseline, comparison: selection.comparison, method: selection.method,
         ...(selection.interventionId && { interventionId: selection.interventionId }),
       }) })}>Evidence Investigation</a>
-    </nav>
+    </SegmentLinks>
     <p role="status">Outcome state · {label(data.status)}</p>
     <p>Engineering decision {adoption.decisionId} · {adoption.operation?.effectId ? 'Implementation independently verified' : 'Implementation verification pending'}</p>
     <p>Adoption evidence · {label(adoption.status)}</p>
     {adoption.operation && <p><a href={DOWNSTREAM_API + '/operations/' + adoption.operation.id + '/export'}>Download downstream operation evidence</a></p>}
     <h3>Modeled opportunity</h3>
-    {data.modeled.length ? data.modeled.map(model => <article key={model.input.eventId}>
+    {data.modeled.length ? data.modeled.map(model => <article className="domain-section" key={model.input.eventId}>
       <p>{model.input.periodId} · Gross {amount(model.grossSeconds)} · Net {amount(model.netSeconds)}</p>
       <p>Weekly gross {amount(model.weeklyGrossSeconds)} · Weekly net {amount(model.weeklyNetSeconds)}</p>
       <p>{model.input.limitation}</p>
@@ -154,7 +155,7 @@ function CaseOutcome({ caseId }: { caseId: string }) {
       <button>Compare outcome periods</button>
     </form>}
     {comparison && <>
-      <p>Observed difference · {amount(comparison.difference, comparison.unit)}</p>
+      <p className="comparison-reading">Observed difference · {amount(comparison.difference, comparison.unit)}</p>
       <p>Baseline {amount(comparison.baselineRate, 'seconds per item')} · Comparison {amount(comparison.comparisonRate, 'seconds per item')}</p>
       <p>{data.verifiedEffects} independently verified effects in the selected adoption period</p>
       {[data.usage.baseline, data.usage.comparison].map((usage, index) => usage && <details key={index}>
@@ -198,11 +199,9 @@ function CaseOutcome({ caseId }: { caseId: string }) {
 export function DeliveryOutcome({ caseId }: { caseId?: string }) {
   const cases = useResource(caseId ? null : OUTCOME_ASSURANCE + '/cases', casesSchema);
   return <>
-    <section className="heading"><h1>Outcome Verification</h1><p>Compare synthetic handling effort for an approved delivery case.</p>
-      <a href="#outcomes">Legacy synthetic outcomes</a>
-    </section>
+    <PageHeader title="Outcome Verification" summary="Compare synthetic handling effort for an approved delivery case." actions={<SegmentLinks label="Outcome datasets"><a href="#outcomes">Legacy synthetic outcomes</a><a href="#outcomes?dataset=fda" aria-current="page">FDA-linked cases</a></SegmentLinks>} />
     {caseId ? <CaseOutcome key={caseId} caseId={caseId} /> : cases.error ? <p role="alert">{cases.error}</p> : cases.data ?
-      cases.data.length > 0 ? <ul>{cases.data.map(item => <li key={item.caseId}>
+      cases.data.length > 0 ? <ul className="record-list case-picker">{cases.data.map(item => <li key={item.caseId}>
         <a href={`#outcomes?dataset=fda&case=${item.caseId}`}>{item.workflowId} · {item.caseId}</a>
       </li>)}</ul> : <p>No approved delivery cases have been recorded.</p> : <p role="status">Loading delivery cases…</p>}
   </>;

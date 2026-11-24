@@ -1,3 +1,4 @@
+import { PageHeader, SegmentLinks } from '../../components/Workspace.tsx';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { z } from 'zod';
@@ -71,9 +72,9 @@ export function Discover() {
   const visible = (tasks.data ?? []).filter(item => `${item.label} ${item.category}`.toLowerCase().includes(filter.trim().toLowerCase()));
 
   return <>
-    <section className="heading"><h1>Discover</h1><p>Inspect the synthetic events behind task classifications and automation recommendations. <a href="#discover?dataset=fda">View simulated FDA records</a></p></section>
+    <PageHeader title="Discover" summary="Inspect the synthetic events behind task classifications and automation recommendations." actions={<SegmentLinks label="Workflow datasets"><a href="#discover" aria-current="page">Legacy fixtures</a><a href="#discover?dataset=fda">View simulated FDA records</a></SegmentLinks>} />
     <div className="panels">
-      <section className="panel"><h2>Task candidates</h2>
+      <section className="panel selection-panel"><h2>Task candidates</h2>
         <label htmlFor="task-filter">Filter tasks</label>
         <input id="task-filter" value={filter} onChange={event => setFilter(event.target.value)} />
         {tasks.error ? <p role="alert">{tasks.error} <button className="secondary" onClick={tasks.retry}>Retry</button></p>

@@ -9,35 +9,64 @@ import { DeliveryOutcome } from './features/outcomes/DeliveryOutcome.tsx';
 import { Investigation } from './features/investigations/Investigation.tsx';
 import { Outcomes } from './features/outcomes/Outcomes.tsx';
 import { FdaIntegration, ImportedAgentHealth, ImportedWorkflowEvidence } from './features/fda-integration/FdaIntegration.tsx';
+import { Workspace, PageHeader, Metrics, Metric } from './components/Workspace.tsx';
+import { useResource } from './lib/resource.ts';
+import { FDA_GATEWAY, fdaStatus, fdaAgentProjection, fdaWorkflowProjection } from '../../shared/contracts/fda-ingestion.ts';
 import './styles/app.css';
 
 const routes = [
-  { id: 'overview', label: 'Overview', view: Overview },
-  { id: 'fda-integration', label: 'FDA Integration', view: FdaIntegration },
-  { id: 'discover', label: 'Discover', view: Discover },
-  { id: 'ats-reliability', label: 'ATS Reliability', view: Reliability },
-  { id: 'agent-health', label: 'Agent Health', view: AgentHealth },
-  { id: 'adoption', label: 'Adoption Diagnostics', view: Adoption },
-  { id: 'outcomes', label: 'Outcome Verification', view: Outcomes },
-  { id: 'investigations', label: 'Evidence Investigation', view: Investigation },
+  { id: 'overview', label: 'Overview', group: 'Workspace', view: Overview },
+  { id: 'fda-integration', label: 'FDA Integration', group: 'Evidence', view: FdaIntegration },
+  { id: 'discover', label: 'Discover', group: 'Evidence', view: Discover },
+  { id: 'agent-health', label: 'Agent Health', group: 'Evidence', view: AgentHealth },
+  { id: 'ats-reliability', label: 'ATS Reliability', group: 'Delivery', view: Reliability },
+  { id: 'adoption', label: 'Adoption Diagnostics', group: 'Delivery', view: Adoption },
+  { id: 'outcomes', label: 'Outcome Verification', group: 'Review', view: Outcomes },
+  { id: 'investigations', label: 'Evidence Investigation', group: 'Review', view: Investigation },
+] as const;
+
+const stages = [
+  { title: 'Inspect source evidence', items: [
+    ['FDA Integration', 'Review ingestion, validation and source receipts.', '#fda-integration'],
+    ['Agent Health', 'Check endpoint reporting, permissions and incidents.', '#agent-health?dataset=fda'],
+  ] },
+  { title: 'Assess and deliver', items: [
+    ['Workflow Evidence', 'Review observations, engineering decisions and delivery cases.', '#discover?dataset=fda'],
+    ['ATS Reliability', 'Test how a synthetic submission recovers from an interrupted request.', '#ats-reliability'],
+    ['Adoption Diagnostics', 'Review adoption, interventions and follow-up measurements.', '#adoption?dataset=fda'],
+  ] },
+  { title: 'Verify and investigate', items: [
+    ['Outcome Verification', 'Compare measured handling effort and reviewed outcomes.', '#outcomes?dataset=fda'],
+    ['Evidence Investigation', 'Inspect citations and review advisory findings.', '#investigations'],
+  ] },
 ] as const;
 
 function Overview() {
-  const descriptions = [
-    'Inspect simulated source ingestion, canonical records and processing receipts.',
-    'Inspect observed task sequences, scoring factors and review decisions.',
-    'Trace submissions through commitment, acknowledgment loss and safe recovery.',
-    'Inspect synthetic endpoint history, permissions and observation gaps.',
-    'Diagnose usage barriers, record interventions and compare follow-up measurements.',
-    'Inspect opportunity models, execution costs and the evidence for measured outcomes.',
-    'Investigate delivery evidence and review cited advisory findings.',
-  ];
+  const source = useResource(FDA_GATEWAY + '/status', fdaStatus);
+  const health = useResource(FDA_GATEWAY + '/agent-health', fdaAgentProjection);
+  const workflows = useResource(FDA_GATEWAY + '/workflow-evidence', fdaWorkflowProjection);
+  const count = (value: number | undefined, error?: string) => value?.toLocaleString() ?? (error ? 'Unavailable' : 'Loading…');
+
   return <>
-    <section className="heading"><h1>Delivery Assurance</h1>
-      <p>Investigate how workflow evidence supports an automation decision and verify how the submission system recovers from failure.</p></section>
-    <div className="overview-grid">{routes.slice(1).map(({ id, label }, index) => (
-      <section className="panel" key={id}><h2><a href={`#${id}`}>{label}</a></h2><p>{descriptions[index]}</p></section>
-    ))}</div>
+    <PageHeader title="Delivery assurance" summary="Follow synthetic source evidence through engineering decisions, verified execution and outcome review."
+      actions={<a className="button-link primary" href="#fda-integration">Inspect source</a>} />
+    <section className="overview-live" aria-label="Synthetic source overview">
+      <div className="overview-live-heading"><h2>Evidence at a glance</h2><a href="#fda-integration">View source activity</a></div>
+      <Metrics>
+        <Metric label="Accepted records" value={count(source.data?.acceptedRecords, source.error)} detail="FDA Integration" />
+        <Metric label="Endpoints reporting" value={count(health.data?.reporting, health.error)} detail="Agent Health" />
+        <Metric label="Workflow candidates" value={count(workflows.data?.length, workflows.error)} detail="Workflow Evidence" />
+      </Metrics>
+    </section>
+    <section className="overview-journey" aria-label="Delivery workflow">
+      <h2>Explore the delivery workflow</h2>
+      <div className="journey-grid">{stages.map(stage => <article className="journey-card" key={stage.title}>
+        <h3>{stage.title}</h3>
+        <ul>{stage.items.map(([name, detail, href]) => <li key={href}>
+          <a href={href}><strong>{name}</strong><span>{detail}</span></a>
+        </li>)}</ul>
+      </article>)}</div>
+    </section>
   </>;
 }
 
@@ -55,19 +84,13 @@ function App() {
   const imported = params.get('dataset') === 'fda';
   const View = imported && active.id === 'agent-health' ? ImportedAgentHealth
     : imported && active.id === 'discover' ? ImportedWorkflowEvidence : active.view;
-  return <div className="workspace">
-    <header className="masthead">
-      <div className="brand"><span className="brand-mark" aria-hidden="true">fda</span> Delivery Assurance Lab</div>
-      <span className="environment"><span aria-hidden="true" /> Synthetic data</span>
-    </header>
-    <nav className="navigation" aria-label="Workspace">
-      {routes.map(route => <a href={`#${route.id}`} key={route.id} aria-current={active.id === route.id ? 'page' : undefined}>{route.label}</a>)}
-    </nav>
-    <main>{active.id === 'investigations' ? <Investigation caseId={params.get('case') ?? undefined} investigationId={params.get('investigation') ?? undefined}
-      workflowId={params.get('workflow') ?? undefined} search={query} /> : imported && active.id === 'adoption' ? <DeliveryAdoption caseId={params.get('case') ?? undefined} /> : imported && active.id === 'outcomes' ? <DeliveryOutcome caseId={params.get('case') ?? undefined} /> : <View receiptId={receiptId} incidentId={params.get('incident') ?? undefined}
-      windowId={params.get('window') ?? undefined} workflowId={params.get('workflow') ?? undefined} />}</main>
-    <footer>Independent engineering assessment</footer>
-  </div>;
+  return <Workspace routes={routes} current={active}>
+    {active.id === 'investigations' ? <Investigation caseId={params.get('case') ?? undefined} investigationId={params.get('investigation') ?? undefined}
+      workflowId={params.get('workflow') ?? undefined} search={query} /> : imported && active.id === 'adoption'
+      ? <DeliveryAdoption caseId={params.get('case') ?? undefined} /> : imported && active.id === 'outcomes'
+      ? <DeliveryOutcome caseId={params.get('case') ?? undefined} /> : <View receiptId={receiptId} incidentId={params.get('incident') ?? undefined}
+        windowId={params.get('window') ?? undefined} workflowId={params.get('workflow') ?? undefined} />}
+  </Workspace>;
 }
 
 createRoot(document.getElementById('root')!).render(<StrictMode><App /></StrictMode>);

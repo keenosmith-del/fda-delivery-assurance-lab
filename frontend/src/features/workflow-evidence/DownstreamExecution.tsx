@@ -1,3 +1,4 @@
+import { Metrics, Metric, SegmentLinks } from '../../components/Workspace.tsx';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { DOWNSTREAM_API } from '../../../../shared/contracts/downstream.ts';
@@ -87,11 +88,13 @@ export function DownstreamExecution({ caseId, token }: { caseId: string; token: 
   const canRecover = evidence?.canControl && operation?.state === 'failed-terminal' && !operation.redriven
     && !excluded.includes(operation.last_error ?? '');
   const canCancel = evidence?.canControl && operation?.state === 'queued';
-  return <section aria-label="Synthetic downstream execution">
+  return <section className="domain-section downstream-section" aria-label="Synthetic downstream execution">
     <h4>Synthetic downstream execution</h4>
-    <a href={`#adoption?dataset=fda&case=${caseId}`}>Open FDA-linked Adoption Diagnostics</a>{' · '}
-    <a href={`#outcomes?dataset=fda&case=${caseId}`}>FDA-linked Outcome Assurance</a>{' · '}
-    <a href={`#investigations?category=retry-reconciliation&case=${caseId}`}>Investigate downstream evidence</a>
+    <SegmentLinks label="Execution evidence">
+      <a href={`#adoption?dataset=fda&case=${caseId}`}>Open FDA-linked Adoption Diagnostics</a>
+      <a href={`#outcomes?dataset=fda&case=${caseId}`}>FDA-linked Outcome Assurance</a>
+      <a href={`#investigations?category=retry-reconciliation&case=${caseId}`}>Investigate downstream evidence</a>
+    </SegmentLinks>
     {error && <p role="alert">{error}</p>}
     {!info && !error && <p>Loading execution eligibility…</p>}
     {info && <>
@@ -104,7 +107,9 @@ export function DownstreamExecution({ caseId, token }: { caseId: string; token: 
         <button disabled={busy} value="start">Start synthetic execution</button>
       </form>}
       {operation && evidence && <>
-        <p role="status">Execution state · {human(operation.state)}</p>
+        <p className="status-pill" role="status">Execution state · {human(operation.state)}</p>
+        <Metrics><Metric label="Dispatch attempts" value={operation.dispatches} /><Metric label="Authoritative lookups" value={operation.reconciliations} />
+          <Metric label="Verified effect" value={operation.verified_effect_id ? 'Recorded' : 'Pending'} /></Metrics>
         <dl>
           <dt>Operation</dt><dd>{operation.id}</dd><dt>Intended effect</dt><dd>{human(operation.effect.category)}</dd>
           <dt>Adapter</dt><dd>Synthetic HTTP v1</dd><dt>Effect identity</dt><dd>{operation.effect_key}</dd>
@@ -124,7 +129,7 @@ export function DownstreamExecution({ caseId, token }: { caseId: string; token: 
           {canRecover && <button disabled={busy} value="reconcile">Request authoritative lookup</button>}
           {canRecover && !operation.accepted && !operation.authorisation.pilot && <button disabled={busy} value="redrive">Request safe redrive</button>}
         </form>}
-        <a href={DOWNSTREAM_API + '/operations/' + operation.id + '/export'} download>Download downstream execution evidence</a>
+        <a className="export-link" href={DOWNSTREAM_API + '/operations/' + operation.id + '/export'} download>Download downstream execution evidence</a>
       </>}
     </>}
     {info && <button type="button" onClick={() => { setError(''); setGeneration(value => value + 1); }}>Refresh execution details</button>}

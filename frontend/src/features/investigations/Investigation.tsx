@@ -1,3 +1,4 @@
+import { PageHeader } from '../../components/Workspace.tsx';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { z } from 'zod';
@@ -29,7 +30,7 @@ const investigationHref = (id: string, record?: string) =>
 const localLink = (url: string) => /^\/api\/[A-Za-z0-9_/?.=&%-]+$/.test(url);
 
 function EvidenceList({ records, expanded, idPrefix = 'citation-' }: { records: Citation[]; expanded?: string; idPrefix?: string }) {
-  return <ol>{records.map(item => <li key={item.id} id={idPrefix + item.id}>
+  return <ol className="citation-list">{records.map(item => <li key={item.id} id={idPrefix + item.id}>
     <details open={expanded === item.id || undefined}>
       <summary>{item.summary} · {label(item.provenance)}{item.period && ' · ' + item.period}</summary>
       <p>{item.recordId} · {item.version}{item.timestamp && ' · ' + item.timestamp}</p>
@@ -55,7 +56,7 @@ function Analysis({ output, openCitation }: { output: ModelAnalysis; openCitatio
   const source = (id: string) => <button className="secondary" onClick={() => openCitation(id)}>{id}</button>;
   const claims = (items: ModelAnalysis['summary']) => <ul>{items.map((claim,index) =>
     <li key={index}>{label(claim.fact)} · {format(claim.value)} {source(claim.citation)}</li>)}</ul>;
-  return <section aria-label="Model-generated analysis">
+  return <section className="domain-section" aria-label="Model-generated analysis">
     <h3>Investigation summary</h3>{claims(output.summary)}
     <h3>Established facts</h3>{output.establishedFacts.length ? claims(output.establishedFacts) : <p>No facts selected.</p>}
     <h3>Findings</h3>{output.findings.map((item,i) => <article key={i}><h4>{label(item.classification)}</h4>{claims(item.claims)}</article>)}
@@ -142,8 +143,8 @@ function CaseInvestigation({ caseId, investigationId, search }: { caseId: string
   }
   const allowed = config.data?.operator || config.data?.local;
   const packet = preview.data;
-  return <>
-    <section className="panel">
+  return <div className="investigation-layout">
+    <section className="panel investigation-scope">
       <h2>Evidence scope</h2>
       <p>Delivery case {caseId}</p>
       {packet && <>
@@ -181,13 +182,13 @@ function CaseInvestigation({ caseId, investigationId, search }: { caseId: string
         </>}
       </form>
     </section>
-    <section className="panel"><h2>Investigation history</h2>
+    <section className="panel investigation-history"><h2>Investigation history</h2>
       {history.error && <p role="alert">{history.error}</p>}
-      {history.data?.length ? <ul>{history.data.map(entry => <li key={entry.id}><a href={investigationHref(caseId,entry.id)}>{entry.question}</a>{' · '}
+      {history.data?.length ? <ul className="record-list">{history.data.map(entry => <li key={entry.id}><a href={investigationHref(caseId,entry.id)}>{entry.question}</a>{' · '}
         {statuses[entry.status] ?? label(entry.status)}</li>)}</ul> : <p>No investigations recorded for this case.</p>}
     </section>
     {record.error && <p role="alert">{record.error}</p>}
-    {state && state.caseId === caseId && <section className="panel">
+    {state && state.caseId === caseId && <section className="panel investigation-result">
       <h2>Investigation result</h2>
       <p>{state.question}</p>
       <p>Recorded scope · {label(state.packet.scope.category)}{state.packet.scope.baseline && ' · ' + state.packet.scope.baseline + ' to ' + state.packet.scope.comparison}</p>
@@ -213,17 +214,17 @@ function CaseInvestigation({ caseId, investigationId, search }: { caseId: string
       <a href={recordPath + '/export'} download>Download investigation evidence</a>
     </section>}
     {message && <p role={message.error ? 'alert' : 'status'}>{message.text}</p>}
-  </>;
+  </div>;
 }
 
 export function Investigation({ caseId, investigationId, workflowId, search = '' }:
   { caseId?: string; investigationId?: string; workflowId?: string; search?: string }) {
   const cases = useResource(caseId ? null : INVESTIGATIONS + '/cases' + (workflowId ? '?workflowId=' + encodeURIComponent(workflowId) : ''),casesSchema);
   return <>
-    <section className="heading"><h1>Evidence Investigation</h1><p>Inspect synthetic case evidence and review advisory model analysis.</p></section>
+    <PageHeader title="Evidence Investigation" summary="Inspect synthetic case evidence and review advisory model analysis." />
     {caseId ? <CaseInvestigation key={caseId} caseId={caseId} investigationId={investigationId} search={search} />
       : cases.error ? <p role="alert">{cases.error}</p> : cases.data ? cases.data.length ?
-        <ul>{cases.data.map(item => <li key={item.caseId}><a href={investigationHref(item.caseId)}>{item.workflowId} · {item.caseId}</a></li>)}</ul>
+        <ul className="record-list case-picker">{cases.data.map(item => <li key={item.caseId}><a href={investigationHref(item.caseId)}>{item.workflowId} · {item.caseId}</a></li>)}</ul>
         : <p>No approved delivery cases are available.</p> : <p role="status">Loading delivery cases…</p>}
   </>;
 }

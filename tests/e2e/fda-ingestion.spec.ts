@@ -1,3 +1,4 @@
+import { captureInterface } from '../support/interface-capture.ts';
 import { randomUUID } from 'node:crypto';
 import { OUTCOME_MEASUREMENTS } from '../../shared/contracts/outcome-assurance.ts';
 import { outcomeFixture } from '../../scripts/outcome-fixture.ts';
@@ -26,24 +27,27 @@ test('traces the independent FDA import into the endpoint and workflow workspace
   await publish('invalid-contract');
   await page.getByRole('button', { name: 'Refresh ingestion' }).click();
   await expect(page.getByText('Records received', { exact: true })).toBeVisible();
+  await captureInterface(page,'fda-integration',undefined,true);
   await expect(page.getByRole('link', { name: 'record-001 · duplicate' })).toBeVisible();
   await page.getByRole('link', { name: 'record-001 · rejected' }).click();
   await expect(page.getByText('UNSUPPORTED_CONTRACT', { exact: true })).toBeVisible();
   await page.getByRole('link', { name: 'record-017 · processed' }).click();
   await page.getByRole('link', { name: 'Open imported Agent Health' }).click();
   await expect(page.getByRole('heading', { name: '7 of 9 endpoints reporting' })).toBeVisible();
+  await captureInterface(page,'agent-health',undefined,true);
   await expect(page.getByText('endpoint-007 · Reporting · limited capture')).toBeVisible();
   await page.getByRole('link', { name: 'record-017', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Receipt details' })).toBeVisible();
   await page.getByRole('link', { name: 'record-043 · processed' }).click();
   await page.getByRole('link', { name: 'Open imported Workflow Evidence' }).click();
   await expect(page.getByText(/Observation coverage is incomplete/)).toBeVisible();
+  await captureInterface(page,'workflow-evidence');
   const delayedObservation = page.locator('section.observation').filter({ has: page.getByText('observation-003', { exact: true }) });
   await expect(delayedObservation.getByText(/Delayed observation/)).toBeVisible();
   await page.getByRole('link', { name: 'record-043', exact: true }).click();
   const details = page.locator('section').filter({ has: page.getByRole('heading', { name: 'Receipt details' }) });
   await expect(details.getByText('workflow.observation', { exact: true })).toBeVisible();
-  await expect(page.getByText('Synthetic data', { exact: true })).toBeVisible();
+  await expect(page.getByRole('complementary').getByText('Synthetic data', { exact: true })).toBeVisible();
   expect(errors).toEqual([]);
 });
 
@@ -151,6 +155,7 @@ test('approves an imported workflow and exports its verified execution after a l
   await workflow.getByRole('button', { name: 'Record engineering decision' }).click();
   await workflow.getByRole('button', { name: 'Create delivery case' }).click();
   await expect(workflow.getByText('Delivery case · ready for technical implementation', { exact: true })).toBeVisible();
+  await captureInterface(page,'engineering-assessment','.assessment-section');
   await page.reload();
   await expect(workflow.getByText('Delivery case · ready for technical implementation', { exact: true })).toBeVisible();
   const download = page.waitForEvent('download');
@@ -166,6 +171,7 @@ test('approves an imported workflow and exports its verified execution after a l
   await expect(attemptEvidence.filter({ hasText: 'ACKNOWLEDGMENT_UNAVAILABLE' })).toBeVisible();
   await expect(attemptEvidence.filter({ hasText: 'authoritative-effect-lookup' })).toBeVisible();
   await expect(execution.getByText('1 dispatches · 1 lookups', { exact: true })).toBeVisible();
+  await captureInterface(page,'downstream-execution','.downstream-section',true);
   const executionExport = page.waitForEvent('download');
   await execution.getByRole('link', { name: 'Download downstream execution evidence' }).click();
   expect((await executionExport).suggestedFilename()).toMatch(/-downstream-assurance.json$/);
@@ -204,6 +210,7 @@ test('approves an imported workflow and exports its verified execution after a l
   await page.getByLabel('Transition reason').fill('Reviewed the separately published follow-up.');
   await page.getByRole('button', { name: 'Record follow-up' }).click();
   await expect(page.getByText(/User adoption · 50.0 percentage points/)).toBeVisible();
+  await captureInterface(page,'adoption-diagnostics',undefined,true);
   await expect(page.getByText('Observed change cannot establish an intervention effect.')).toBeVisible();
   const adoptionExport = page.waitForEvent('download');
   await page.getByRole('link', { name: 'Download adoption evidence' }).click();
@@ -238,6 +245,7 @@ test('approves an imported workflow and exports its verified execution after a l
   await page.getByLabel('Review limitations').fill('The observation does not establish intervention causality.');
   await page.getByRole('button', { name: 'Record outcome review' }).click();
   await expect(page.getByText('Reviewed difference · 140 seconds', { exact: true })).toBeVisible();
+  await captureInterface(page,'outcome-verification',undefined,true);
   const outcomeExport = page.waitForEvent('download');
   await page.getByRole('link', { name: 'Download outcome evidence', exact: true }).click();
   expect((await outcomeExport).suggestedFilename()).toMatch(/-outcome-assurance.json$/);
@@ -247,6 +255,7 @@ test('approves an imported workflow and exports its verified execution after a l
   await page.getByLabel('Engineering question').fill('Which evidence supports the reviewed synthetic outcome?');
   await page.getByRole('button', { name: 'Request AI analysis', exact: true }).click();
   await expect(page.getByText('Investigation status · Human review required', { exact: true })).toBeVisible({timeout:15000});
+  await captureInterface(page,'evidence-investigation',undefined,true);
   const investigationUrl = page.url();
   const modelRegion = page.getByRole('region', {name:'Model-generated analysis'});
   const cite = modelRegion.getByRole('button', {name:/^(outcome|adoption|downstream|engineering)-[0-9a-f]{24}$/}).first();
@@ -279,8 +288,9 @@ test('approves an imported workflow and exports its verified execution after a l
   await expect(page.getByText('Outcome state · stale review', { exact: true })).toBeVisible();
   await page.goto(investigationUrl);
   await expect(page.getByText('Evidence changed. Start a new investigation to review current evidence.',{exact:true})).toBeVisible();
-  await page.getByRole('link', {name:'Outcome Verification',exact:true}).last().click();
-
+  // Navigate directly to the same case. Sidebar links can switch to the legacy dataset.
+  await page.goto('/#outcomes?dataset=fda&case=' + encodeURIComponent(caseId));
+  await expect(page.getByText('Outcome state · stale review', { exact: true })).toBeVisible();
   await expect(page.getByText('Reviewed difference · Unknown', { exact: true })).toBeVisible();
 
   await page.getByRole('link', { name: 'Workflow Evidence and delivery case' }).click();
